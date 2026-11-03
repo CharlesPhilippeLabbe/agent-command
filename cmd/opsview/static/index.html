@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>opsview</title>
+
+<!-- Pinned CDN versions. marked renders the markdown body client-side;
+     the server never sends HTML. -->
+<script src="https://cdn.jsdelivr.net/npm/mustache@4.2.0/mustache.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
+<script src="/app.js"></script>
+<script src="/docs.js"></script>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body hx-ext="mustache-tmpl">
+
+<!-- Both mount points load on page load and again on the "reload" event,
+     which app.js fires on navigation and on hot-reload pings. -->
+<aside class="side">
+  <nav class="tabs">
+    <a href="/" class="active">docs</a>
+    <a href="/ops.html">ops</a>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="toggle dark theme" title="toggle dark theme">
+      <svg class="moon" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 10A6 6 0 0 1 6 2.5a6 6 0 1 0 7.5 7.5z"/></svg>
+      <svg class="sun" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>
+    </button>
+  </nav>
+  <nav id="nav"
+       hx-get="/api/tree"
+       hx-trigger="load, reload"
+       hx-swap="innerHTML"
+       mustache-tmpl="tree">
+  </nav>
+</aside>
+
+<main id="doc"
+      hx-get="/api/doc"
+      hx-on:htmx:config-request="event.detail.path = docURL()"
+      hx-trigger="load, reload"
+      hx-swap="innerHTML"
+      mustache-tmpl="doc-view">
+</main>
+
+<!-- ============================================================ -->
+<!-- TEMPLATES. The server only sends JSON; everything below is   -->
+<!-- the client-side rendering layer.                             -->
+<!-- ============================================================ -->
+<script type="text/x-template" id="tree">
+  {{#data}}
+  <a class="root" href="/" data-doc>{{root}}</a>
+  <ul>{{#nodes}}{{> tree-node}}{{/nodes}}</ul>
+  {{/data}}
+</script>
+
+<script type="text/x-template" id="tree-node">
+  <li>
+    {{#dir}}<details open><summary>{{name}}/</summary><ul>{{#children}}{{> tree-node}}{{/children}}</ul></details>{{/dir}}
+    {{^dir}}<a href="{{href}}" data-doc>{{name}}</a>{{/dir}}
+  </li>
+</script>
+
+<script type="text/x-template" id="doc-view">
+  {{#data}}
+  {{#path}}
+  <header>
+    <div class="pipeline"><span class="chip">{{path}}</span></div>
+  </header>
+  {{#meta.length}}
+  <table class="data-table meta">
+    <tbody>
+      {{#meta}}<tr class="row"><td>{{key}}</td><td>{{value}}</td></tr>{{/meta}}
+    </tbody>
+  </table>
+  {{/meta.length}}
+  <article class="md" data-path="{{path}}">{{#markdown}}{{{body}}}{{/markdown}}</article>
+  {{/path}}
+  {{^path}}
+  <header>
+    <h1>{{root}}</h1>
+    <p class="tagline">Every markdown file matching the pattern.</p>
+  </header>
+  <table class="data-table">
+    <tbody>
+      {{#files}}<tr class="row"><td><a href="{{href}}" data-doc>{{path}}</a></td></tr>{{/files}}
+      {{^files}}<tr class="row empty"><td>Nothing</td></tr>{{/files}}
+    </tbody>
+  </table>
+  {{/path}}
+  {{/data}}
+</script>
+</body>
+</html>

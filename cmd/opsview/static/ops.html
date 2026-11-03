@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ops · opsview</title>
+
+<!-- Pinned CDN versions. marked renders the markdown body client-side;
+     the server never sends HTML. -->
+<script src="https://cdn.jsdelivr.net/npm/mustache@4.2.0/mustache.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
+<script src="/app.js"></script>
+<script src="/ops.js"></script>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body hx-ext="mustache-tmpl" class="ops-page">
+<main class="ops-main">
+  <nav class="tabs">
+    <a href="/">docs</a>
+    <a href="/ops.html" class="active">ops</a>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="toggle dark theme" title="toggle dark theme">
+      <svg class="moon" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 10A6 6 0 0 1 6 2.5a6 6 0 1 0 7.5 7.5z"/></svg>
+      <svg class="sun" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>
+    </button>
+  </nav>
+
+  <!-- Project filter: radio chips, :checked drives the selected chip. The
+       choice lives in ?project=; markFilter() checks the matching radio
+       after each render. -->
+  <fieldset id="projects" class="chip-filter" role="radiogroup"
+            hx-get="/api/projects"
+            hx-trigger="load, reload"
+            hx-swap="innerHTML"
+            mustache-tmpl="project-list">
+  </fieldset>
+
+  <label class="toggle">
+    <input type="checkbox" id="show-closed" onchange="setFilter({ all: this.checked ? '1' : '' })"> include closed
+  </label>
+
+  <!-- Every active operation: one board per plan. Orders sit in columns by
+       dependency depth; app.js draws the dependency lines after each swap. -->
+  <div id="ops"
+       hx-get="/api/ops"
+       hx-on:htmx:config-request="event.detail.path = opsURL()"
+       hx-trigger="load, reload"
+       hx-swap="innerHTML"
+       mustache-tmpl="ops-view">
+  </div>
+</main>
+
+<!-- The selected order or plan in full, from /ops.html?order=<path> or
+     ?plan=<path>. Empty (and hidden) when nothing is selected. -->
+<aside id="panel"
+       hx-get="/api/order"
+       hx-on:htmx:config-request="panelRequest(event, this)"
+       hx-trigger="load, reload"
+       hx-swap="innerHTML"
+       mustache-tmpl="panel-view"></aside>
+
+<!-- ============================================================ -->
+<!-- TEMPLATES. The server only sends JSON; everything below is   -->
+<!-- the client-side rendering layer.                             -->
+<!-- ============================================================ -->
+<script type="text/x-template" id="project-list">
+  <legend>Project</legend>
+  <label>
+    <input type="radio" name="project" value="" onchange="setFilter({ project: this.value })">
+    <span>all</span>
+  </label>
+  {{#data}}
+  <label>
+    <input type="radio" name="project" value="{{name}}" onchange="setFilter({ project: this.value })">
+    <span>{{name}}</span>
+  </label>
+  {{/data}}
+</script>
+
+<script type="text/x-template" id="ops-view">
+  {{#data}}{{> op-board}}{{/data}}
+  {{^data}}
+  <header>
+    <h1>ops</h1>
+    <p class="tagline">No active operations.</p>
+  </header>
+  {{/data}}
+</script>
+
+<script type="text/x-template" id="op-board">
+  <section class="op">
+    <header>
+      <h1><a href="/ops.html?plan={{plan.path}}" data-panel data-path="{{plan.path}}">{{name}}</a></h1>
+      <div class="pipeline">
+        <span class="chip">{{project}}</span>
+        <span class="chip status status-{{plan.status}}">{{plan.status}}</span>
+        <span class="chip">{{done}}/{{total}} done</span>
+        <a class="chip" href="/ops.html?plan={{plan.path}}" data-panel data-path="{{plan.path}}">plan.md</a>
+      </div>
+    </header>
+    {{#problems.length}}
+    <ul class="problems">{{#problems}}<li>{{.}}</li>{{/problems}}</ul>
+    {{/problems.length}}
+    <div class="board" style="--cols: {{columns}}">
+      <svg class="links" aria-hidden="true"></svg>
+      {{#orders}}{{> order-card}}{{/orders}}
+      {{^orders}}<p class="tagline">No orders yet.</p>{{/orders}}
+    </div>
+  </section>
+</script>
+
+<script type="text/x-template" id="order-card">
+  <a class="card status-{{status}} {{#waiting.length}}is-waiting{{/waiting.length}}"
+     style="grid-column: {{column}}"
+     href="/ops.html?order={{path}}"
+     data-panel
+     data-path="{{path}}"
+     data-order="{{order}}"
+     data-depends="{{depends}}">
+    <div class="card-top">
+      <span class="nn">{{nn}}</span>
+      <span class="badge">{{#waiting.length}}waiting{{/waiting.length}}{{^waiting.length}}{{status}}{{/waiting.length}}</span>
+    </div>
+    <div class="slug">{{slug}}</div>
+    <div class="card-meta">
+      {{rank}} · rev {{rev}}{{#stale}} · <span class="stale">revised</span>{{/stale}}{{#reports.length}} · {{reports.length}} report(s){{/reports.length}}
+    </div>
+    {{#risk}}<div class="risk-line"><span class="risk risk-{{risk}}">{{risk}} risk</span></div>{{/risk}}
+  </a>
+</script>
+
+<!-- /api/order and /api/plan share this template: an order response has
+     `order` (and `report` when a report tab is open), a plan response
+     doesn't. -->
+<script type="text/x-template" id="panel-view">
+  {{#data}}
+  <header class="panel-head">
+    <div class="pipeline">
+      <span class="chip">{{op.name}}</span>
+      {{#order}}
+      <span class="chip">{{nn}}-{{slug}}</span>
+      <span class="chip status status-{{status}}">{{status}}</span>
+      {{/order}}
+      {{^order}}
+      <span class="chip">plan.md</span>
+      <span class="chip status status-{{op.plan.status}}">{{op.plan.status}}</span>
+      <span class="chip">{{op.done}}/{{op.total}} done</span>
+      {{/order}}
+    </div>
+    <div class="panel-actions">
+      <!-- each icon is the window with the panel's share filled in; app.css
+           turns them a quarter on small screens, where the panel is a sheet -->
+      <div class="sizes" role="group" aria-label="panel size">
+        <button data-size="" onclick="setPanelSize('')" aria-label="narrow" title="narrow">
+          <svg viewBox="0 0 16 12" aria-hidden="true"><rect class="frame" x="0.5" y="0.5" width="15" height="11" rx="1.5"/><rect class="fill" x="10" y="2" width="4" height="8"/></svg>
+        </button>
+        <button data-size="half" onclick="setPanelSize('half')" aria-label="half" title="half">
+          <svg viewBox="0 0 16 12" aria-hidden="true"><rect class="frame" x="0.5" y="0.5" width="15" height="11" rx="1.5"/><rect class="fill" x="8" y="2" width="6" height="8"/></svg>
+        </button>
+        <button data-size="full" onclick="setPanelSize('full')" aria-label="full" title="full">
+          <svg viewBox="0 0 16 12" aria-hidden="true"><rect class="frame" x="0.5" y="0.5" width="15" height="11" rx="1.5"/><rect class="fill" x="2" y="2" width="12" height="8"/></svg>
+        </button>
+      </div>
+      <button class="close" onclick="closePanel()" aria-label="close" title="close">
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg>
+      </button>
+    </div>
+  </header>
+
+  {{#order}}
+  <nav class="tabs panel-tabs">
+    <a href="/ops.html?order={{path}}" data-panel data-tab="">order</a>
+    {{#reports}}
+    <a href="/ops.html?order={{orderPath}}&amp;report={{path}}" data-panel data-tab="{{path}}">
+      report {{attempt}}
+    </a>
+    {{/reports}}
+  </nav>
+  {{/order}}
+
+  {{#report}}
+  <table class="data-table meta">
+    <tbody>
+      <tr class="row"><td>status</td><td><span class="badge status-{{status}}">{{status}}</span></td></tr>
+      <tr class="row"><td>order rev</td><td>{{orderRev}}</td></tr>
+      <tr class="row"><td>order sha</td><td>{{orderSha}}</td></tr>
+      <tr class="row"><td>rank</td><td>{{rank}}</td></tr>
+      <tr class="row"><td>greenlit</td><td>{{greenlit}}</td></tr>
+      <tr class="row"><td>date</td><td>{{date}}</td></tr>
+    </tbody>
+  </table>
+  {{/report}}
+
+  {{^report}}{{#order}}
+  <table class="data-table meta">
+    <tbody>
+      <tr class="row"><td>rank</td><td>{{rank}}</td></tr>
+      {{#risk}}<tr class="row"><td>risk</td><td><span class="risk risk-{{risk}}">{{risk}}</span></td></tr>{{/risk}}
+      <tr class="row"><td>rev</td><td>{{rev}}{{#stale}} (revised since last report){{/stale}}</td></tr>
+      <tr class="row"><td>depends</td><td>{{#depends}}{{.}} {{/depends}}{{^depends}}-{{/depends}}</td></tr>
+      {{#waiting.length}}<tr class="row"><td>waiting on</td><td>{{#waiting}}{{.}} {{/waiting}}</td></tr>{{/waiting.length}}
+    </tbody>
+  </table>
+
+  <table class="data-table attempts">
+    <thead><tr><th>Report</th><th>Status</th><th>Rev</th><th>Greenlit</th><th>Date</th></tr></thead>
+    <tbody>
+      {{#reports}}
+      <tr class="row row-link" onclick="openPanel('/ops.html?order={{orderPath}}&amp;report={{path}}')">
+        <td>{{attempt}}</td>
+        <td><span class="badge status-{{status}}">{{status}}</span></td>
+        <td>{{orderRev}}</td>
+        <td>{{greenlit}}</td>
+        <td>{{date}}</td>
+      </tr>
+      {{/reports}}
+      {{^reports}}<tr class="row empty"><td colspan="5">No reports yet</td></tr>{{/reports}}
+    </tbody>
+  </table>
+  {{/order}}{{/report}}
+
+  {{^order}}{{#op.problems.length}}
+  <ul class="problems">{{#op.problems}}<li>{{.}}</li>{{/op.problems}}</ul>
+  {{/op.problems.length}}{{/order}}
+
+  <article class="md" data-path="{{path}}">{{#markdown}}{{{body}}}{{/markdown}}</article>
+  <p class="tagline"><a href="/?path={{path}}">open in docs</a></p>
+
+  <!-- steps through every plan, order and report on the board, in order -->
+  <nav class="panel-nav">
+    {{#prev}}
+    <a class="prev" href="{{href}}" data-panel>
+      <span class="dir"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5L4 6l3.5 3.5"/></svg>prev</span>
+      <span class="label">{{label}}</span>
+    </a>
+    {{/prev}}
+    {{#here}}<span class="here">{{label}}</span>{{/here}}
+    {{#next}}
+    <a class="next" href="{{href}}" data-panel>
+      <span class="dir">next<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5L8 6l-3.5 3.5"/></svg></span>
+      <span class="label">{{label}}</span>
+    </a>
+    {{/next}}
+  </nav>
+  {{/data}}
+</script>
+</body>
+</html>
