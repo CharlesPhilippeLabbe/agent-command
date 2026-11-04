@@ -15,16 +15,21 @@ depends: [NN, NN]
 # OBJECTIVE
 One sentence. End state, not activity.
 
+# KEY POINTS
+- <thing a human must not miss: irreversible step, ordering dependency, easy-to-misread constraint>
+
 # SCOPE
 IN: exact files/dirs that may be created or edited
 OUT: files/dirs/behaviors forbidden
 
 # STEPS
 1. One action per step. Exact files, functions, values.
+   Why: <cause and effect: what breaks without it, or what a later step needs from it>
 
 # DONE WHEN
 - `<command>` gives `<expected>`
-- <checkable condition>
+- <checkable condition, one subject>
+
 
 # RISKS
 - <what could break>: <how to notice, how to avoid>
@@ -33,10 +38,10 @@ OUT: files/dirs/behaviors forbidden
 - <decision>: <reason>
 
 # OPEN
-- <gray zone executor may resolve, with bounds>
+- <gray zone commander explicitly delegated, with bounds>
 ```
 
-Omit `depends` if none. Omit RISKS if none. No "maybe", "probably", "if needed", "etc.", "or similar".
+Omit `depends` if none. Omit KEY POINTS if none. Omit RISKS if none. Omit OPEN if none. No "maybe", "probably", "if needed", "etc.", "or similar".
 
 ## Editing
 
@@ -63,6 +68,8 @@ How bad a wrong execution is, independent of rank:
 `medium` and `high` need RISKS.
 
 ## Rank by gray zones
+
+Soldier is the default. Captain or major only when OPEN holds items the commander delegated.
 
 | Rank | OPEN | Allowed gray zones |
 |---|---|---|

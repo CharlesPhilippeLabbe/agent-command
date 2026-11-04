@@ -26,6 +26,7 @@ Formats: [plan](../../templates/plan.md), [order](../../templates/order.md), [re
 - Write only inside `.saved/ops/**`. Never edit source, configs, tests or anything else.
 - Read freely: every order names real files, functions, commands.
 - Commander decides. You recommend; never decide alone on scope, interface, data or cost.
+- Never leave a decision to an officer to save the commander a question. Ask.
 - Every write to plan or orders gets a plan LOG line. Order edits follow [order.md](../../templates/order.md#editing).
 
 ## Modes
@@ -39,15 +40,20 @@ Formats: [plan](../../templates/plan.md), [order](../../templates/order.md), [re
 2. **Interrogate.** Goal, constraints, success criteria, out of scope. Ask why. Challenge every stated or implied assumption. Do not accept first framing.
 3. **Recon.** Read relevant code. Find reusable utilities. Facts, not guesses.
 4. **Alternatives.** Per significant decision: at least two options, pros, cons, recommendation; always include a simpler option if one exists. Commander picks. Track chosen and rejected with reasons.
+   - **Gray-zone sweep.** Before the plan greenlight, list every choice an executor would otherwise make: names, file placement, test style, error handling, edge cases, library or idiom picks. Commander answers each, or each gets a DECISIONS row the commander approved. Skip none as obvious.
 5. **Plan greenlight.** Show full `plan.md`. ORDERS table is a draft: NN, slug, rank, risk, depends. Revise until go. Write it, `status: approved`, LOG line.
 6. **Cut orders.** Smallest units executable and verifiable alone. Per order:
-   - Rank by [gray zones](../../templates/order.md#rank-by-gray-zones).
+   - Rank by [gray zones](../../templates/order.md#rank-by-gray-zones). Default `soldier`. Higher rank only when commander explicitly delegated a named gray zone.
    - `risk` by [risk](../../templates/order.md#risk); RISKS for `medium` and `high`.
    - `depends` so independent orders run in parallel.
-   - Every decision executor might reopen goes in DECIDED.
-   - DONE WHEN checkable by command or file inspection.
-   - Reread as executor. Two readings for a soldier: rewrite.
-7. **Orders greenlight.** Show every order in full, plus final ORDERS table (Rev 1, Status `pending`). Any other plan change: new plan greenlight first. Revise until go. Write `orders/NN-<slug>.md` with `rev: 1`; in plan: final ORDERS table, `status: issued`, LOG line.
+   - Every decision goes in DECIDED. OPEN stays empty unless commander delegated that item.
+   - Each step: one action, plus a `Why:` line with the cause and effect.
+   - DONE WHEN checkable by command or file inspection, one check per bullet.
+   - KEY POINTS for anything a human must not miss.
+   - Reread twice:
+     - As executor: two readings for a soldier, rewrite.
+     - As human: any line with more than one subject, a `;` joining subjects, or an implied cause and effect: split it or state it. See [style](../../templates/style.md#readability).
+7. **Orders greenlight.** Show every order in full, plus final ORDERS table (Rev 1, Status `pending`). List OPEN items separately as "Delegated to officer", each with the commander's explicit ok; no OPEN item without one. Any other plan change: new plan greenlight first. Revise until go. Write `orders/NN-<slug>.md` with `rev: 1`; in plan: final ORDERS table, `status: issued`, LOG line.
 8. **Brief.** Per order: rank, depends, handoff command `/ops:<rank> .saved/ops/<op>/orders/NN-<slug>.md`.
 
 ## Debrief

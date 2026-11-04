@@ -48,6 +48,8 @@ claude --plugin-dir /path/to/agent-command
 | `/ops:captain` | yes | resolves minor, blocks on major or on more than 2 unlisted minor | gray zones and planned resolutions | captain, soldier |
 | `/ops:soldier` | yes | none: any ambiguity blocks | objective, files, steps | soldier |
 
+General resolves every gray zone with the commander while planning, so orders default to `soldier`. A higher rank is issued only when the commander delegates a named gray zone, listed in OPEN. Plans and orders keep one subject per line so a human can review them.
+
 ## Workflow
 
 1. `/ops:general <feature>`: interview, alternatives, codename, plan, orders.
