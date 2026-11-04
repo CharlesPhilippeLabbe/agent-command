@@ -23,8 +23,8 @@ IN: exact files/dirs that may be created or edited
 OUT: files/dirs/behaviors forbidden
 
 # STEPS
-1. One action per step. Exact files, functions, values.
-   Why: <cause and effect: what breaks without it, or what a later step needs from it>
+1. One outcome per step, not per keystroke. Name exact files, functions, values. Describe behavior; do not write the code.
+   Why: <only when not obvious: what breaks without it, or what a later step needs from it>
 
 # DONE WHEN
 - `<command>` gives `<expected>`
@@ -40,6 +40,26 @@ OUT: files/dirs/behaviors forbidden
 # OPEN
 - <gray zone commander explicitly delegated, with bounds>
 ```
+
+## Altitude
+
+Write each step at the level a competent engineer needs. Name the outcome, not the motions.
+
+- One step per outcome, not per keystroke. "Add token expiry check to `Authenticator`", not "open the file, find the method, add an if, compare the timestamp".
+- Skip anything a competent engineer does without being told: opening files, running the formatter, importing what the code uses, saving.
+- Spell out only what the engineer cannot infer: a decision, a constraint, a trap, an exact value.
+- Order with fewer than 3 steps is fine. Do not split a step to look thorough.
+- A step that restates what the code or DONE WHEN already makes obvious: delete it.
+
+## Code in orders
+
+Orders say what to do, not how to code it. The officer writes the code.
+
+- Describe behavior, inputs, outputs and the files and functions involved.
+- No code blocks, pseudocode or full signatures.
+- Exception: an exact literal the code must contain (command, config key, error string, name). Inline, one line.
+- Exception: a snippet the commander wrote or asked for. Quote it unchanged.
+- Need more than a line to pin down a behavior: state it as a DONE WHEN check instead.
 
 Omit `depends` if none. Omit KEY POINTS if none. Omit RISKS if none. Omit OPEN if none. No "maybe", "probably", "if needed", "etc.", "or similar".
 

@@ -26,6 +26,7 @@ Formats: [plan](../../templates/plan.md), [order](../../templates/order.md), [re
 - Write only inside `.saved/ops/**`. Never edit source, configs, tests or anything else.
 - Read freely: every order names real files, functions, commands.
 - Commander decides. You recommend; never decide alone on scope, interface, data or cost.
+- You plan; you do not write the implementation. No code blocks, pseudocode or full signatures in orders. See [code in orders](../../templates/order.md#code-in-orders).
 - Never leave a decision to an officer to save the commander a question. Ask.
 - Every write to plan or orders gets a plan LOG line. Order edits follow [order.md](../../templates/order.md#editing).
 
@@ -47,7 +48,7 @@ Formats: [plan](../../templates/plan.md), [order](../../templates/order.md), [re
    - `risk` by [risk](../../templates/order.md#risk); RISKS for `medium` and `high`.
    - `depends` so independent orders run in parallel.
    - Every decision goes in DECIDED. OPEN stays empty unless commander delegated that item.
-   - Each step: one action, plus a `Why:` line with the cause and effect.
+   - Each step: one outcome at [altitude](../../templates/order.md#altitude), plus a `Why:` line with the cause and effect only when it is not obvious.
    - DONE WHEN checkable by command or file inspection, one check per bullet.
    - KEY POINTS for anything a human must not miss.
    - Reread twice:
