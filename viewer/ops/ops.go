@@ -20,6 +20,9 @@ import (
 // skipDirs are never walked into: too big, and never hold operations.
 var skipDirs = map[string]bool{".git": true, "node_modules": true, ".venv": true}
 
+// Skipped reports whether a directory of this name is never walked into.
+func Skipped(name string) bool { return skipDirs[name] }
+
 var (
 	planStatuses   = []string{"approved", "issued", "active", "closed"}
 	reportStatuses = []string{"in-progress", "done", "partial", "blocked", "refused"}
@@ -132,7 +135,7 @@ func Walk(fsys fs.FS, fn func(p string)) {
 		case err != nil:
 		case !d.IsDir():
 			fn(p)
-		case skipDirs[d.Name()]:
+		case Skipped(d.Name()):
 			return fs.SkipDir
 		}
 		return nil

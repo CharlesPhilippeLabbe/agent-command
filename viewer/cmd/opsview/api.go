@@ -181,7 +181,7 @@ func (s *server) apiOps(w http.ResponseWriter, r *http.Request) {
 // Every project with at least one operation (closed included), for the
 // dashboard's project filter.
 func (s *server) apiProjects(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, projects(ops.Discover(s.fsys)))
+	writeJSON(w, http.StatusOK, projects(s.snap.Load().ops))
 }
 
 // One order in full, or with ?report=<path> one of its reports instead.
@@ -191,8 +191,11 @@ func (s *server) apiOrder(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusNotFound, "not an order: "+p)
 		return
 	}
-	op := ops.Load(s.fsys, path.Dir(path.Dir(p)))
-	o := find(op.Orders, func(o *ops.Order) bool { return o.Path == p })
+	var o *ops.Order
+	op := s.opAt(path.Dir(path.Dir(p)))
+	if op != nil {
+		o = find(op.Orders, func(o *ops.Order) bool { return o.Path == p })
+	}
 	if o == nil {
 		writeJSONError(w, http.StatusNotFound, "no such order: "+p)
 		return
@@ -213,11 +216,12 @@ func (s *server) apiOrder(w http.ResponseWriter, r *http.Request) {
 // One operation's plan in full.
 func (s *server) apiPlan(w http.ResponseWriter, r *http.Request) {
 	p := cleanPath(r.URL.Query().Get("path"))
-	if path.Base(p) != "plan.md" || !s.match(p) {
+	op := s.opAt(path.Dir(p))
+	if path.Base(p) != "plan.md" || !s.match(p) || op == nil {
 		writeJSONError(w, http.StatusNotFound, "not a plan: "+p)
 		return
 	}
-	s.writePanel(w, r, &panel{Path: p, Op: summary(ops.Load(s.fsys, path.Dir(p)))}, planHref(p))
+	s.writePanel(w, r, &panel{Path: p, Op: summary(op)}, planHref(p))
 }
 
 // writePanel adds the body of res.Path and the stops around href, on the
@@ -244,9 +248,19 @@ func (s *server) rawFile(w http.ResponseWriter, r *http.Request) {
 func (s *server) visibleOps(r *http.Request) []*ops.Operation {
 	all := r.URL.Query().Get("all") == "1"
 	project := r.URL.Query().Get("project")
-	return slices.DeleteFunc(ops.Discover(s.fsys), func(op *ops.Operation) bool {
-		return (!all && op.Plan.Status == "closed") || (project != "" && op.Project != project)
-	})
+	// A new slice: the snapshot's is shared.
+	out := []*ops.Operation{}
+	for _, op := range s.snap.Load().ops {
+		if (all || op.Plan.Status != "closed") && (project == "" || op.Project == project) {
+			out = append(out, op)
+		}
+	}
+	return out
+}
+
+// opAt is the operation in directory dir, or nil.
+func (s *server) opAt(dir string) *ops.Operation {
+	return find(s.snap.Load().ops, func(op *ops.Operation) bool { return op.Dir == dir })
 }
 
 // tree nests the matched files by directory, rebuilt per request so new files

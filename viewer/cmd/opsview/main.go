@@ -8,7 +8,6 @@ import (
 	"embed"
 	"flag"
 	"fmt"
-	"hash/fnv"
 	"io/fs"
 	"log"
 	"mime"
@@ -18,11 +17,9 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
+	"sync/atomic"
 
 	"github.com/bmatcuk/doublestar/v4"
-
-	"github.com/CharlesPhilippeLabbe/agent-command/viewer/ops"
 )
 
 //go:embed static/*
@@ -32,8 +29,12 @@ const defaultPattern = "**/.saved/ops/**/*.md"
 
 type server struct {
 	fsys fs.FS
+	dir  string // the same directory as fsys, as a path, for the watcher
 	name string
 	pats []string
+
+	// snap is what the API reads; the watcher swaps in a new one when files change.
+	snap atomic.Pointer[snapshot]
 
 	mu   sync.Mutex
 	subs map[chan struct{}]bool
@@ -45,8 +46,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	s := &server{fsys: root.FS(), name: dir, pats: pats, subs: map[chan struct{}]bool{}}
-	go s.watch()
+	s := &server{fsys: root.FS(), dir: dir, name: dir, pats: pats, subs: map[chan struct{}]bool{}}
+	if err := s.startWatch(); err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Printf("serving %s (%s) on http://%s\n", dir, strings.Join(pats, ", "), addr)
 	log.Fatal(http.ListenAndServe(addr, s.handler()))
@@ -85,17 +88,6 @@ func (s *server) handler() http.Handler {
 	return mux
 }
 
-// watch polls the tree and notifies subscribers when any file is added, removed or modified.
-func (s *server) watch() {
-	last := s.signature()
-	for range time.Tick(500 * time.Millisecond) {
-		if sig := s.signature(); sig != last {
-			last = sig
-			s.notify()
-		}
-	}
-}
-
 func (s *server) subscribe() chan struct{} {
 	ch := make(chan struct{}, 1)
 	s.mu.Lock()
@@ -122,16 +114,6 @@ func (s *server) notify() {
 	}
 }
 
-func (s *server) signature() uint64 {
-	h := fnv.New64a()
-	for _, p := range s.files() {
-		if info, err := fs.Stat(s.fsys, p); err == nil {
-			fmt.Fprintf(h, "%s %d %d\n", p, info.ModTime().UnixNano(), info.Size())
-		}
-	}
-	return h.Sum64()
-}
-
 // events is a server-sent event stream; each message tells the page to reload.
 func (s *server) events(w http.ResponseWriter, r *http.Request) {
 	ch := s.subscribe()
@@ -153,16 +135,9 @@ func (s *server) events(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// files lists the matched markdown files, in lexical order.
-func (s *server) files() []string {
-	var out []string
-	ops.Walk(s.fsys, func(p string) {
-		if s.match(p) {
-			out = append(out, p)
-		}
-	})
-	return out
-}
+// files lists the matched markdown files, in lexical order. The slice is
+// shared: read it, don't change it.
+func (s *server) files() []string { return s.snap.Load().files }
 
 func (s *server) match(p string) bool {
 	if !strings.HasSuffix(p, ".md") {
