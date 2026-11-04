@@ -1,0 +1,11 @@
+{
+  "name": "opossum",
+  "owner": { "name": "cp" },
+  "plugins": [
+    {
+      "name": "ops",
+      "source": "./",
+      "description": "Chain of command for agent work."
+    }
+  ]
+}

@@ -1,86 +1,77 @@
-# opsview
+# ops
 
-Local, read-only browser view of [ops](../README.md) operations: every `.saved/ops/<op>/` under a directory, as dependency boards with order, report and plan panels, plus a browser for the markdown files themselves.
+Claude Code plugin: a chain of command for agent work.
 
-The markdown files stay the only source of truth. opsview reads them on each request and never writes.
+> [!WARNING]
+> AI-generated. This is my first vibe-coded project: the skills, templates and the opsview viewer were written with Claude Code. Read it before you rely on it.
 
-## Build and run
+The **General** plans with you (the commander) and cuts the plan into orders. **Major**, **Captain** and **Soldier** execute orders with decreasing tolerance for ambiguity, each asking you for one greenlight before executing, and file a report per attempt.
 
-Needs Go 1.27+.
+Goals: predictable decisions under uncertainty, traceability across sessions, low token cost.
 
-```sh
-go install github.com/CharlesPhilippeLabbe/agent-command/viewer/cmd/opsview@latest
-opsview --srcdir ~/code          # every repo under ~/code with .saved/ops/
-```
+## Install
 
-From a checkout: `cd viewer && go build -o opsview ./cmd/opsview`.
-
-Open http://127.0.0.1:8888/ops.html for the dashboard, or http://127.0.0.1:8888/ for the docs browser.
-
-| Flag | Default | |
-|---|---|---|
-| `--srcdir` | `.` | directory to scan; a positional argument does the same |
-| `--port` | `8888` | |
-| `--addr` | `127.0.0.1` | bind address |
-| `--pattern` | `**/.saved/ops/**/*.md` | glob of files the docs browser shows and the watcher follows; `**` allowed, repeatable |
-
-Directories named `.git`, `node_modules` and `.venv` are skipped.
-
-### Development
-
-With [air](https://github.com/air-verse/air), `air` in `viewer/` rebuilds on any Go, HTML, CSS or JS change and serves `../..` on the default port (see `.air.toml`). The open page reloads itself after a rebuild.
+This repo is its own marketplace, `opossum` (see [.claude-plugin/marketplace.json](.claude-plugin/marketplace.json)). Add it once, then install the plugin:
 
 ```sh
-go vet ./... && go test ./...
+claude plugin marketplace add CharlesPhilippeLabbe/agent-command
+claude plugin install ops@opossum
 ```
 
-## Pages
+Or inside a session: `/plugin marketplace add CharlesPhilippeLabbe/agent-command`, then `/plugin install ops@opossum`. Restart Claude Code; the skills show up as `/ops:general`, `/ops:major`, `/ops:captain`, `/ops:soldier`.
 
-**ops** (`/ops.html`): one board per open operation. Orders sit in columns by dependency depth, joined by their dependency lines; hovering a card highlights its chain.
+`--scope project` on `install` records the plugin in the repo's `.claude/settings.json` instead of your user settings.
 
-- Card: number, slug, status, rank, rev, report count, risk level. `waiting` means a dependency isn't `done`; `revised` means the order changed since its latest report. `in-progress` pulses.
-- Filters: project chips, and "include closed".
-- Panel: click a card, or the plan, for its frontmatter, reports and rendered body. Report tabs switch to one attempt. Prev and next step through every plan, order and report on the board. Three widths (a bottom sheet on screens up to 1024px wide).
-- Problems found in the files (bad frontmatter, wrong file names, missing dependencies, cycles, an `in-progress` attempt that isn't the latest) are listed above the board.
+## Update
 
-**docs** (`/`): tree of every matched markdown file, with frontmatter as a table and the body rendered.
-
-Everything lives in the URL (`/ops.html?order=<path>&report=<path>&project=<name>&all=1`), so links and the back button work. Any change to a matched file reloads what's on screen. A RISKS section is boxed wherever it appears. Light and dark themes follow the system until toggled.
-
-## API
-
-JSON only, wrapped as `{"state": "success", "data": ...}` or `{"state": "failed", "error": "..."}`. Only the doc, order and plan endpoints return markdown bodies.
-
-| Endpoint | Returns |
-|---|---|
-| `GET /api/ops[?all=1][&project=<name>]` | operations with plan, orders, reports and derived state |
-| `GET /api/projects` | project names |
-| `GET /api/order?path=<order>[&report=<report>]` | one order or report: frontmatter, body, prev and next |
-| `GET /api/plan?path=<plan>` | one plan: operation summary, body, prev and next |
-| `GET /api/tree` | matched files nested by directory |
-| `GET /api/doc[?path=<file>]` | one matched file, or the flat list without `path` |
-| `GET /api/events` | server-sent event on every change to a matched file |
-| `GET /files/<path>` | raw file, for images and links inside docs |
-
-Derived per order: `status` (latest attempt's, else `pending`), `waiting`, `stale`, `column`.
-
-## Security
-
-- No authentication. The default bind is `127.0.0.1`. `--addr 0.0.0.0` lets anyone on the network read every file under `--srcdir` through `/files/`.
-- Paths are cleaned and opened through `os.OpenRoot`, so requests can't escape `--srcdir`, symlinks included.
-- Read-only: there are no write endpoints.
-
-## Layout
-
-```
-cmd/opsview/
-  main.go        flags, file matching, watcher, server-sent events
-  api.go         JSON endpoints
-  static/        pages, templates and styles, embedded in the binary
-    app.js       shared: Mustache rendering for htmx, markdown, links, hot reload, theme
-    docs.js      docs page
-    ops.js       dashboard: panel, filters, dependency lines
-ops/             reads operations from frontmatter, derives status, dependencies, problems
+```sh
+claude plugin marketplace update opossum   # fetch the latest marketplace
+claude plugin update ops@opossum           # install the new version
 ```
 
-The pages are static HTML. htmx fetches JSON and renders it with Mustache templates kept in the page (`mustache-tmpl` extension). marked renders markdown in the browser. All three load from pinned CDN versions.
+Restart Claude Code to load it. In a session, `/plugin` lists installed plugins and updates.
+
+A new version is picked up only when `version` in [.claude-plugin/plugin.json](.claude-plugin/plugin.json) changes, so bump it with every release. `claude plugin tag` creates the matching `ops--v<version>` git tag.
+
+## Try without installing
+
+```sh
+claude --plugin-dir /path/to/agent-command
+```
+
+## Ranks
+
+| Skill | Implements | Gray zones | Greenlight shows | Takes orders of rank |
+|---|---|---|---|---|
+| `/ops:general` | never | questions everything, proposes alternatives, commander decides | full plan / orders | n/a |
+| `/ops:major` | yes | resolves all, logs each | expected assumptions | major, captain, soldier |
+| `/ops:captain` | yes | resolves minor, blocks on major or on more than 2 unlisted minor | gray zones and planned resolutions | captain, soldier |
+| `/ops:soldier` | yes | none: any ambiguity blocks | objective, files, steps | soldier |
+
+## Workflow
+
+1. `/ops:general <feature>`: interview, alternatives, codename, plan, orders.
+2. Hand each order to its rank, in any session: `/ops:captain .saved/ops/vacuum-robot/orders/02-schedule.md`. Officer checks, asks for go, executes, reports.
+3. `/ops:general vacuum-robot`: debrief. Raises blockers and assumptions; ratified assumptions become plan decisions; answers go into the orders (rev bumped); follow-up orders issued.
+4. Retry a revised order with the same handoff command.
+
+## Files (in the target repo)
+
+```
+.saved/ops/<operation>/
+  plan.md
+  orders/NN-<slug>.md       # edited only by commander or General; rev bumped, logged in plan
+  reports/NN-<slug>.K.md    # attempt K, one per run; only an in-progress attempt is overwritten, by its final report
+```
+
+`<operation>` is a two-word kebab-case codename only remotely related to the feature, e.g. `vacuum-robot` for an auto-clean feature.
+
+Report statuses: `in-progress` (written at go, replaced by the final report; claims the order), `done`, `partial`, `blocked`, `refused`.
+
+Orders carry `risk: low|medium|high` and, from `medium` up, a RISKS section; officers show both in the greenlight.
+
+Formats in [templates/](templates/): [plan](templates/plan.md), [order](templates/order.md), [report](templates/report.md), [style](templates/style.md), shared [officer procedure](templates/officer.md).
+
+## Viewer
+
+[viewer/](viewer/) holds `opsview`, a local read-only dashboard of every operation: boards by dependency, order and report panels, docs browser. See [viewer/README.md](viewer/README.md).
