@@ -330,7 +330,35 @@ body {
   background: var(--panel);
   border-right: var(--rule);
 }
-.side .tabs { margin: 0; padding: var(--space-sm) var(--space-sm) 0; }
+
+/* the docs page's tab row, above the document and as wide as the window like
+   the ops page's; the theme toggle sits last */
+.doc-main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2xl) var(--space-3xl) 0;
+}
+.doc-main > .tabs { margin-bottom: 0; }
+
+/* the sidebar's collapse button, at the top of the sidebar; collapsed, the
+   sidebar shrinks to a rail holding just this button */
+.side-head { display: flex; justify-content: flex-end; padding: var(--space-sm); }
+:root[data-nav="collapsed"] .side { width: auto; border-bottom: none; }
+:root[data-nav="collapsed"] #nav { display: none; }
+:root[data-nav="collapsed"] .side-head { justify-content: center; }
+.side-toggle {
+  display: flex;
+  border: 0;
+  padding: var(--space-2xs);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--ease);
+}
+.side-toggle:hover { color: var(--ink); }
+.side-toggle svg { display: block; width: var(--icon-size); height: var(--icon-size); }
+.side-toggle path, .side-toggle rect { fill: none; stroke: currentColor; stroke-width: var(--icon-stroke); stroke-linecap: round; stroke-linejoin: round; }
+
 #nav {
   flex: 1;
   overflow-y: auto;
@@ -360,10 +388,8 @@ body {
 #nav li a.active { color: var(--accent-ink); background: var(--accent); }
 
 #doc {
-  flex: 1;
-  min-width: 0;
   max-width: var(--content-width);
-  padding: var(--space-3xl) var(--space-3xl) var(--space-4xl);
+  padding: var(--space-3xl) 0 var(--space-4xl);
 }
 
 .data-table.meta { margin-bottom: var(--space-2xl); }
@@ -422,7 +448,8 @@ body {
 @media (max-width: 720px) {
   body { flex-direction: column; }
   .side { width: 100%; height: auto; position: static; border-right: none; border-bottom: var(--rule); }
-  #doc { padding: var(--space-xl) var(--space-lg) var(--space-4xl); }
+  .doc-main { padding: var(--space-lg) var(--space-lg) 0; }
+  #doc { padding: var(--space-xl) 0 var(--space-4xl); }
 }
 
 /* ---- ops dashboard ---------------------------------------------------- */

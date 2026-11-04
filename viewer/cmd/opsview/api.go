@@ -60,11 +60,14 @@ type metaItem struct {
 }
 
 // document is the only response that carries a markdown body. List endpoints
-// (/api/tree, /api/ops) return paths and frontmatter fields only.
+// (/api/tree, /api/ops) return paths and frontmatter fields only. Prev and
+// Next are the files either side of it in the sidebar.
 type document struct {
 	Path string     `json:"path"`
 	Meta []metaItem `json:"meta,omitempty"`
 	Body string     `json:"body"`
+	Prev *step      `json:"prev"`
+	Next *step      `json:"next"`
 }
 
 type listing struct {
@@ -157,7 +160,18 @@ func (s *server) apiDoc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	meta, body, err := ops.SplitFrontmatter(src)
-	writeJSON(w, http.StatusOK, document{Path: p, Meta: metaRows(meta, err), Body: string(body)})
+	doc := document{Path: p, Meta: metaRows(meta, err), Body: string(body)}
+	doc.Prev, _, doc.Next = neighbours(s.docSteps(), docHref(p))
+	writeJSON(w, http.StatusOK, doc)
+}
+
+// docSteps lists the matched files as stops, in sidebar order.
+func (s *server) docSteps() []step {
+	var stops []step
+	for _, p := range s.files() {
+		stops = append(stops, step{docHref(p), p})
+	}
+	return stops
 }
 
 func (s *server) apiOps(w http.ResponseWriter, r *http.Request) {

@@ -1,6 +1,22 @@
 // Docs page (index.html): the file tree and one rendered doc, selected by
 // /?path=<doc>. Loaded after app.js.
 
+// Sidebar: "collapsed" on <html data-nav>, read by app.css and remembered per
+// browser. This runs from <head>, so the first paint is already right.
+let navCollapsed = false;
+try { navCollapsed = localStorage.getItem("navCollapsed") === "1"; } catch (err) {}
+
+function applyNav() {
+    if (navCollapsed) document.documentElement.dataset.nav = "collapsed";
+    else delete document.documentElement.dataset.nav;
+}
+function toggleSidebar() {
+    navCollapsed = !navCollapsed;
+    try { navCollapsed ? localStorage.setItem("navCollapsed", "1") : localStorage.removeItem("navCollapsed"); } catch (err) {}
+    applyNav();
+}
+applyNav();
+
 function currentPath() { return param("path"); }
 
 function docURL() { return "/api/doc?path=" + encodeURIComponent(currentPath()); }

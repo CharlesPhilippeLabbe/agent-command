@@ -19,14 +19,11 @@
 <!-- Both mount points load on page load and again on the "reload" event,
      which app.js fires on navigation and on hot-reload pings. -->
 <aside class="side">
-  <nav class="tabs">
-    <a href="/" class="active">docs</a>
-    <a href="/ops.html">ops</a>
-    <button class="theme-toggle" onclick="toggleTheme()" aria-label="toggle dark theme" title="toggle dark theme">
-      <svg class="moon" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 10A6 6 0 0 1 6 2.5a6 6 0 1 0 7.5 7.5z"/></svg>
-      <svg class="sun" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>
+  <div class="side-head">
+    <button class="side-toggle" onclick="toggleSidebar()" aria-label="toggle sidebar" title="toggle sidebar">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M6 2.5v11"/></svg>
     </button>
-  </nav>
+  </div>
   <nav id="nav"
        hx-get="/api/tree"
        hx-trigger="load, reload"
@@ -35,13 +32,25 @@
   </nav>
 </aside>
 
-<main id="doc"
-      hx-get="/api/doc"
-      hx-on:htmx:config-request="event.detail.path = docURL()"
-      hx-trigger="load, reload"
-      hx-swap="innerHTML"
-      mustache-tmpl="doc-view">
-</main>
+<div class="doc-main">
+  <!-- Same tab row as the ops page. It stays when the sidebar is collapsed. -->
+  <nav class="tabs">
+    <a href="/" class="active">docs</a>
+    <a href="/ops.html">ops</a>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="toggle dark theme" title="toggle dark theme">
+      <svg class="moon" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 10A6 6 0 0 1 6 2.5a6 6 0 1 0 7.5 7.5z"/></svg>
+      <svg class="sun" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>
+    </button>
+  </nav>
+
+  <main id="doc"
+        hx-get="/api/doc"
+        hx-on:htmx:config-request="event.detail.path = docURL()"
+        hx-trigger="load, reload"
+        hx-swap="innerHTML"
+        mustache-tmpl="doc-view">
+  </main>
+</div>
 
 <!-- ============================================================ -->
 <!-- TEMPLATES. The server only sends JSON; everything below is   -->
@@ -75,6 +84,22 @@
   </table>
   {{/meta.length}}
   <article class="md" data-path="{{path}}">{{#markdown}}{{{body}}}{{/markdown}}</article>
+
+  <!-- steps through the files in sidebar order; styled as in the ops panel -->
+  <nav class="panel-nav">
+    {{#prev}}
+    <a class="prev" href="{{href}}" data-doc>
+      <span class="dir"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2.5L4 6l3.5 3.5"/></svg>prev</span>
+      <span class="label">{{label}}</span>
+    </a>
+    {{/prev}}
+    {{#next}}
+    <a class="next" href="{{href}}" data-doc>
+      <span class="dir">next<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5L8 6l-3.5 3.5"/></svg></span>
+      <span class="label">{{label}}</span>
+    </a>
+    {{/next}}
+  </nav>
   {{/path}}
   {{^path}}
   <header>
