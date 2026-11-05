@@ -38,7 +38,7 @@ go vet ./... && go test ./...
 
 **ops** (`/ops.html`): one board per open operation. Orders sit in columns by dependency depth, joined by their dependency lines; hovering a card highlights its chain.
 
-- Card: number, slug, status, rank, rev, report count, risk level. `waiting` means a dependency isn't `done`; `revised` means the order changed since its latest report. `in-progress` pulses.
+- Card: number, slug, status, rank, rev, report count, risk level. `waiting` means a dependency isn't `done`; `revised` means the order changed since its latest report. `in-progress` pulses. A `dropped` order shows a struck-through slug and is never `waiting`; the `N dropped` chip next to `done/total` shows only when above 0.
 - Filters: project chips, and "include closed".
 - Panel: click a card, or the plan, for its frontmatter, reports and rendered body. Report tabs switch to one attempt. Prev and next step through every plan, order and report on the board. Three widths (a bottom sheet on screens up to 1024px wide).
 - Problems found in the files (bad frontmatter, wrong file names, missing dependencies, cycles, an `in-progress` attempt that isn't the latest) are listed above the board.

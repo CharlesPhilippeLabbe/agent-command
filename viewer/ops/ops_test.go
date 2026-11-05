@@ -138,6 +138,25 @@ func TestInProgress(t *testing.T) {
 	}
 }
 
+func TestDropped(t *testing.T) {
+	fsys := fixture()
+	fsys[dir+"/reports/08-ui.1.md"] = file("---\nop: vacuum-robot\norder: 08\nslug: ui\nattempt: 1\norder_rev: 1\norder_sha: eee\nrank: general\nstatus: dropped\ngreenlit: yes\ndate: 2026-10-24\n---\n")
+	fsys[dir+"/orders/09-tail.md"] = file("---\nop: vacuum-robot\norder: 09\nslug: tail\nrank: soldier\nrev: 1\ndepends: [08]\n---\n")
+	op := Load(fsys, dir)
+	if len(op.Problems) != 0 {
+		t.Errorf("problems: %v", op.Problems)
+	}
+	if o := op.Orders[2]; o.Status != "dropped" || len(o.Waiting) != 0 {
+		t.Errorf("order 08 = %+v", o)
+	}
+	if o := op.Orders[3]; o.Status != "pending" || !reflect.DeepEqual(o.Waiting, []Num{8}) {
+		t.Errorf("order 09 = %+v", o)
+	}
+	if op.Dropped != 1 || op.Done != 1 || op.Total != 4 {
+		t.Errorf("dropped %d done %d total %d", op.Dropped, op.Done, op.Total)
+	}
+}
+
 func TestSplitFrontmatter(t *testing.T) {
 	meta, body, err := SplitFrontmatter([]byte("---\nop: x\ndepends: [01, 02]\n---\n# Title\n"))
 	if err != nil || len(meta) != 2 || meta[0].Key != "op" || string(body) != "# Title\n" {

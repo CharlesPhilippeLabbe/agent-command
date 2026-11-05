@@ -85,12 +85,13 @@ type opSummary struct {
 	Name     string   `json:"name"`
 	Plan     ops.Plan `json:"plan"`
 	Done     int      `json:"done"`
+	Dropped  int      `json:"dropped"`
 	Total    int      `json:"total"`
 	Problems []string `json:"problems"`
 }
 
 func summary(op *ops.Operation) opSummary {
-	return opSummary{op.Project, op.Name, op.Plan, op.Done, op.Total, op.Problems}
+	return opSummary{op.Project, op.Name, op.Plan, op.Done, op.Dropped, op.Total, op.Problems}
 }
 
 // panel is what /api/order and /api/plan return: one file's markdown body,

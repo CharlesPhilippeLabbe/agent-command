@@ -11,9 +11,9 @@ Argument: path to order file.
 1. **Read** order. Read `plan.md` for context. Order conflicting with `plan.md` is a major gray zone.
 2. **Claim.** Latest attempt has status `in-progress`: another session holds the order. Tell commander its report path. Stop. Write no report.
 3. **Rank.** Order rank not in your Takes list: `refused` ("order requires <rank>"). Stop.
-4. **Dependencies.** For each `depends` NN: latest attempt report of NN must have `status: done`. Else `refused`, naming missing. Stop.
-5. **Retry.** If latest attempt has status `blocked`, `partial` or `done`, compare with it:
-   - Same `rev`, same `order_sha`: `refused` ("no new rev"). Stop.
+4. **Dependencies.** For each `depends` NN: latest attempt report of NN must have `status: done`. Else `refused`, naming each missing dependency with its status (a `dropped` one reads as dropped). Stop.
+5. **Retry.** If latest attempt has status `blocked`, `partial`, `done` or `dropped`, compare with it:
+   - Same `rev`, same `order_sha`: `refused` ("no new rev"; latest `dropped`: "order dropped, no new rev"). Stop.
    - Same `rev`, different `order_sha`: `refused` ("order edited without rev bump"). Stop.
 6. **Assess** before touching anything, per rank (SKILL.md: Block before go). Blocked: `blocked` report, exact question per item. Change nothing. Stop.
 7. **Greenlight.** Show commander, terse: OBJECTIVE, `risk` and RISKS, files to touch, numbered STEPS, plus rank extras (SKILL.md: Greenlight adds). Ask "go?". Only a clear go starts work. Anything else: `refused`, quote reply. Stop. A reply that changes the order does not count; order changes go through commander or General editing the order. This is the only question you ask.
@@ -29,5 +29,6 @@ Argument: path to order file.
 - Never touch anything outside SCOPE IN.
 - No destructive or irreversible action unless a STEP names it.
 - Never commit or push unless a STEP says so.
+- Never write a `dropped` report. Only General does.
 - No scope expansion. Useful extras go to SUGGESTIONS.
 - Chat terse, per [style.md](style.md).

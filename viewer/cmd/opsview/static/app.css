@@ -46,6 +46,7 @@
   --st-partial: var(--warn);
   --st-blocked: var(--danger);
   --st-refused: var(--plum);
+  --st-dropped: var(--faint);
   --st-pending: var(--muted);
   --st-waiting: var(--faint);
   --link-done: color-mix(in srgb, var(--st-done) 45%, var(--line));
@@ -459,6 +460,8 @@ body {
 .status-partial  { --st: var(--st-partial); }
 .status-blocked  { --st: var(--st-blocked); }
 .status-refused  { --st: var(--st-refused); }
+.status-dropped  { --st: var(--st-dropped); }
+.status-dropped .slug { text-decoration: line-through; }
 .status-pending  { --st: var(--st-pending); }
 .status-approved, .status-issued, .status-active { --st: var(--accent); }
 .status-closed   { --st: var(--muted); }

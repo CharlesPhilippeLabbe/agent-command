@@ -35,7 +35,7 @@ Plan status:
 - `approved`: plan written, no orders yet.
 - `issued`: orders written.
 - `active`: at least one report exists.
-- `closed`: all orders `done`, goal met, commander greenlit closing.
+- `closed`: all orders `done` or `dropped`, goal met or abandoned, commander greenlit closing. All orders `dropped` allowed when commander says so.
 
 Order status in ORDERS: `pending` (no report yet), else status of the latest report (`in-progress` while an officer executes).
 

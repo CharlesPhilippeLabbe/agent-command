@@ -25,7 +25,7 @@ func Skipped(name string) bool { return skipDirs[name] }
 
 var (
 	planStatuses   = []string{"approved", "issued", "active", "closed"}
-	reportStatuses = []string{"in-progress", "done", "partial", "blocked", "refused"}
+	reportStatuses = []string{"in-progress", "done", "partial", "blocked", "refused", "dropped"}
 	ranks          = []string{"soldier", "captain", "major"}
 	risks          = []string{"low", "medium", "high"}
 )
@@ -57,6 +57,7 @@ type Operation struct {
 
 	Columns int `json:"columns"` // dependency depth of the deepest order
 	Done    int `json:"done"`
+	Dropped int `json:"dropped"`
 	Total   int `json:"total"`
 }
 
@@ -264,8 +265,11 @@ func (l *loader) layout() {
 	for _, o := range l.op.Orders {
 		l.place(o)
 		l.op.Columns = max(l.op.Columns, o.Column)
-		if o.Status == "done" {
+		switch o.Status {
+		case "done":
 			l.op.Done++
+		case "dropped":
+			l.op.Dropped++
 		}
 	}
 	l.op.Total = len(l.op.Orders)
@@ -293,7 +297,7 @@ func (l *loader) place(o *Order) {
 		}
 		l.follow(dep)
 		o.Column = max(o.Column, dep.Column+1)
-		if dep.Status != "done" {
+		if dep.Status != "done" && o.Status != "dropped" {
 			o.Waiting = append(o.Waiting, d)
 		}
 	}

@@ -95,6 +95,8 @@
         <span class="chip">{{project}}</span>
         <span class="chip status status-{{plan.status}}">{{plan.status}}</span>
         <span class="chip">{{done}}/{{total}} done</span>
+        {{#dropped}}
+        <span class="chip">{{.}} dropped</span>{{/dropped}}
         <a class="chip" href="/ops.html?plan={{plan.path}}" data-panel data-path="{{plan.path}}">plan.md</a>
       </div>
     </header>
@@ -145,6 +147,8 @@
       <span class="chip">plan.md</span>
       <span class="chip status status-{{op.plan.status}}">{{op.plan.status}}</span>
       <span class="chip">{{op.done}}/{{op.total}} done</span>
+      {{#op.dropped}}
+      <span class="chip">{{.}} dropped</span>{{/op.dropped}}
       {{/order}}
     </div>
     <div class="panel-actions">

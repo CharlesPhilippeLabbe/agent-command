@@ -54,7 +54,7 @@ General resolves every gray zone with the commander while planning, so orders de
 
 1. `/ops:general <feature>`: interview, alternatives, codename, plan, orders.
 2. Hand each order to its rank, in any session: `/ops:captain .saved/ops/vacuum-robot/orders/02-schedule.md`. Officer checks, asks for go, executes, reports.
-3. `/ops:general vacuum-robot`: debrief. Raises blockers and assumptions; ratified assumptions become plan decisions; answers go into the orders (rev bumped); follow-up orders issued.
+3. `/ops:general vacuum-robot`: debrief. Raises blockers and assumptions; ratified assumptions become plan decisions; answers go into the orders (rev bumped); follow-up orders issued; dropped orders get a report from General.
 4. Retry a revised order with the same handoff command.
 
 ## Files (in the target repo)
@@ -68,7 +68,7 @@ General resolves every gray zone with the commander while planning, so orders de
 
 `<operation>` is a two-word kebab-case codename only remotely related to the feature, e.g. `vacuum-robot` for an auto-clean feature.
 
-Report statuses: `in-progress` (written at go, replaced by the final report; claims the order), `done`, `partial`, `blocked`, `refused`.
+Report statuses: `in-progress` (written at go, replaced by the final report; claims the order), `done`, `partial`, `blocked`, `refused`, `dropped` (written by General at debrief, commander's decision, carries the reason; officers refuse the order until it gets a new rev).
 
 Orders carry `risk: low|medium|high` and, from `medium` up, a RISKS section; officers show both in the greenlight.
 
