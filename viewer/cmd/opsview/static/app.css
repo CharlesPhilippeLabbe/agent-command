@@ -651,23 +651,31 @@ body {
 
 /* the selected order, docked right */
 #panel {
+  --panel-pad-top: var(--space-2xl);
   width: var(--panel-width);
   flex-shrink: 0;
   position: sticky;
   top: 0;
   height: 100vh;
   overflow-y: auto;
-  padding: var(--space-2xl) var(--space-2xl) var(--space-4xl);
+  padding: 0 var(--space-2xl) var(--space-4xl);
   background: var(--panel);
   border-left: var(--rule);
 }
 #panel:empty { display: none; }
+/* pinned while the panel scrolls (the tabs scroll away); the panel's top
+   padding lives here, since sticky offsets stop at a scroller's padding */
 .panel-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--panel-pad-top) 0 var(--space-sm);
+  background: var(--panel);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-md);
-  margin-bottom: var(--space-lg);
+  margin-bottom: calc(var(--space-lg) - var(--space-sm));
 }
 .panel-actions { display: flex; align-items: center; gap: var(--space-md); }
 .sizes {
@@ -821,7 +829,8 @@ body[data-panel-size="full"] #panel {
     border-top: var(--rule);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     box-shadow: var(--shadow-sheet);
-    padding: var(--space-lg);
+    --panel-pad-top: var(--space-lg);
+    padding: 0 var(--space-lg) var(--space-lg);
   }
   body[data-panel-size="full"] #panel { border-radius: 0; }
 }
