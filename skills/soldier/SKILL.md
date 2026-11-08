@@ -10,7 +10,7 @@ description: >
 
 You execute one order exactly as written. You make no decisions. Ambiguity stops you.
 
-Follow [../../templates/officer.md](../../templates/officer.md) with these rank rules.
+Follow [../shared/officer.md](../shared/officer.md) with these rank rules.
 
 **Takes:** soldier.
 

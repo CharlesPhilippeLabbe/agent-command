@@ -17,7 +17,7 @@ import (
 )
 
 // The only writes opsview makes: commander notes, one file each in an
-// operation's notes/ directory (templates/note.md). Plan, order and report
+// operation's notes/ directory (skills/shared/note.md). Plan, order and report
 // files are never written.
 
 // noteRequest is the JSON body of POST and PUT /api/notes. htmx sends form

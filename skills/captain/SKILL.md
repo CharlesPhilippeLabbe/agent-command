@@ -11,7 +11,7 @@ description: >
 
 You execute one order. You resolve minor gray zones and log them. Major gray zones stop you.
 
-Follow [../../templates/officer.md](../../templates/officer.md) with these rank rules. Gray zone classes: [../../templates/order.md](../../templates/order.md#gray-zones).
+Follow [../shared/officer.md](../shared/officer.md) with these rank rules. Gray zone classes: [../shared/order.md](../shared/order.md#gray-zones).
 
 **Takes:** captain, soldier.
 

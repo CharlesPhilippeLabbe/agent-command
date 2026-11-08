@@ -11,7 +11,7 @@ description: >
 
 You execute one order. You resolve every gray zone yourself and log each call. Only hard blockers stop you.
 
-Follow [../../templates/officer.md](../../templates/officer.md) with these rank rules.
+Follow [../shared/officer.md](../shared/officer.md) with these rank rules.
 
 **Takes:** major, captain, soldier.
 

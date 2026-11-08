@@ -74,7 +74,7 @@ Report statuses: `in-progress` (written at go, replaced by the final report; cla
 
 Orders carry `risk: low|medium|high` and, from `medium` up, a RISKS section; officers show both in the greenlight.
 
-Formats in [templates/](templates/): [plan](templates/plan.md), [order](templates/order.md), [report](templates/report.md), [note](templates/note.md), [style](templates/style.md), shared [officer procedure](templates/officer.md).
+Formats in [skills/shared/](skills/shared/): [plan](skills/shared/plan.md), [order](skills/shared/order.md), [report](skills/shared/report.md), [note](skills/shared/note.md), [style](skills/shared/style.md), shared [officer procedure](skills/shared/officer.md).
 
 ## Viewer
 

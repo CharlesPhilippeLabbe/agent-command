@@ -2,7 +2,7 @@
 
 Local browser view of [ops](../README.md) operations: every `.saved/ops/<op>/` under a directory, as dependency boards with order, report and plan panels, plus a browser for the markdown files themselves.
 
-The markdown files stay the only source of truth. opsview reads them on each request and writes only note files: commander notes in an operation's `notes/` ([note format](../templates/note.md)).
+The markdown files stay the only source of truth. opsview reads them on each request and writes only note files: commander notes in an operation's `notes/` ([note format](../skills/shared/note.md)).
 
 ## Build and run
 
