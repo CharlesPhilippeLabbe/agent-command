@@ -846,9 +846,10 @@ body[data-annotate] #panel article [data-line] { cursor: pointer; }
   cursor: auto;
 }
 .note-card .note-text { margin: 0; white-space: pre-wrap; }
-/* the quote only shows where the block isn't: in the detached tray */
+/* the quote only shows where the block isn't: in the detached tray and the
+   resolved section */
 .note-quote { display: none; }
-.notes-detached .note-quote {
+.notes-detached .note-quote, .notes-resolved .note-quote {
   display: block;
   margin: 0 0 var(--space-xs);
   padding: var(--space-xs) var(--space-sm);
@@ -887,13 +888,16 @@ body[data-annotate] #panel article [data-line] { cursor: pointer; }
    while it holds none */
 .notes-detached { margin-bottom: var(--space-xl); }
 .notes-detached:not(:has(.note-card)) { display: none; }
-.notes-detached h2 {
+.notes-detached h2, .notes-resolved summary {
   margin: 0 0 var(--space-sm);
   font: var(--weight-bold) var(--text-xs) var(--font-mono);
   letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
   color: var(--muted);
 }
+.notes-resolved { margin-top: var(--space-xl); }
+.note-card.resolved { border-left-color: var(--muted); }
+.note-resolution { margin-top: var(--space-xs); color: var(--muted); font-size: var(--text-sm); }
 
 /* confirm dialog for [confirm-dialog] elements: native <dialog>, the
    browser owns centring and backdrop (from opos-cli) */
@@ -934,11 +938,6 @@ body[data-annotate] #panel article [data-line] { cursor: pointer; }
 .modal-actions .danger:hover {
   background: color-mix(in srgb, var(--danger) 90%, var(--ink));
   border-color: color-mix(in srgb, var(--danger) 90%, var(--ink));
-}
-
-/* touch screens up to tablet width: note controls big enough for a finger */
-@media (max-width: 1024px) {
-  .btn-ghost, .note-form .btn, .modal-actions button {  }
 }
 
 /* small screens: the panel is a sheet docked to the bottom, and the three

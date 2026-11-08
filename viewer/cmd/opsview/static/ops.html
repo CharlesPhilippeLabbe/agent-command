@@ -241,6 +241,12 @@
   <div class="notes-holder" hidden>{{#notes}}{{^detached}}{{> note-card}}{{/detached}}{{/notes}}</div>
 
   <article class="md" data-path="{{path}}">{{#annotated}}{{{body}}}{{/annotated}}</article>
+  {{#resolved.length}}
+  <details class="notes-resolved">
+    <summary>Resolved ({{resolved.length}})</summary>
+    {{#resolved}}{{> resolved-card}}{{/resolved}}
+  </details>
+  {{/resolved.length}}
   <p class="tagline"><a href="/?path={{path}}">open in docs</a></p>
 
   <!-- steps through every plan, order and report on the board, in order -->
@@ -274,6 +280,23 @@
       <button type="button" class="btn-ghost"
               hx-put="/api/notes" hx-vals='{"path": "{{path}}", "status": "resolved"}'
               hx-target="next .note-status" mustache-tmpl="note-result">resolve</button>
+      <button type="button" class="btn-ghost danger"
+              hx-delete="/api/notes" hx-vals='{"path": "{{path}}"}'
+              hx-target="next .note-status" mustache-tmpl="note-result"
+              confirm-dialog data-quote="{{quote}}">delete</button>
+      <span class="note-status"></span>
+    </div>
+  </div>
+</script>
+
+<!-- One resolved note, in the "Resolved" section under the document. -->
+<script type="text/x-template" id="resolved-card">
+  <div class="note-card resolved" data-note="{{path}}">
+    <pre class="note-quote">{{quote}}</pre>
+    <p class="note-text">{{text}}</p>
+    <div class="note-resolution">{{#markdown}}{{{resolution}}}{{/markdown}}</div>
+    <div class="note-foot">
+      <span class="note-date">{{created}}</span>
       <button type="button" class="btn-ghost danger"
               hx-delete="/api/notes" hx-vals='{"path": "{{path}}"}'
               hx-target="next .note-status" mustache-tmpl="note-result"

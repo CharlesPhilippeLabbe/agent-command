@@ -42,7 +42,7 @@ go vet ./... && go test ./...
 - Filters: project chips, and "include closed".
 - Panel: click a card, or the plan, for its frontmatter, reports and rendered body. Report tabs switch to one attempt. Prev and next step through every plan, order and report on the board. Three widths (a bottom sheet on screens up to 1024px wide).
 - Problems found in the files (bad frontmatter, wrong file names, missing dependencies, cycles, an `in-progress` attempt that isn't the latest) are listed above the board.
-- Notes: the panel's "annotate" toggle (remembered per browser) turns a tap on any block of the plan, order or report (heading, paragraph, list item, table row, code block, quote) into a note form under it. A saved note shows as a card under its block, with edit, resolve, and delete behind a confirm dialog. A note whose quoted lines are gone from the file sits in a "Detached notes" tray at the top. A closed operation has no toggle, so it takes no new notes, but its open notes still show and keep their buttons. While a note form holds text, hot reload leaves the panel alone and catches up once the form closes.
+- Notes: the panel's "annotate" toggle (remembered per browser) turns a tap on any block of the plan, order or report (heading, paragraph, list item, table row, code block, quote) into a note form under it. A saved note shows as a card under its block, with edit, resolve, and delete behind a confirm dialog. A note whose quoted lines are gone from the file sits in a "Detached notes" tray at the top. A closed operation has no toggle, so it takes no new notes, but its open notes still show and keep their buttons. While a note form holds text, hot reload leaves the panel alone and catches up once the form closes. Resolved notes sit in a collapsed "Resolved" section at the bottom, each with its quote, the note, the General's resolution and a delete button.
 
 **docs** (`/`): tree of every matched markdown file, with frontmatter as a table and the body rendered.
 
@@ -56,8 +56,8 @@ JSON only, wrapped as `{"state": "success", "data": ...}` or `{"state": "failed"
 |---|---|
 | `GET /api/ops[?all=1][&project=<name>]` | operations with plan, orders, reports and derived state |
 | `GET /api/projects` | project names |
-| `GET /api/order?path=<order>[&report=<report>]` | one order or report: frontmatter, body, open notes, prev and next |
-| `GET /api/plan?path=<plan>` | one plan: operation summary, body, open notes, prev and next |
+| `GET /api/order?path=<order>[&report=<report>]` | one order or report: frontmatter, body, open and resolved notes, prev and next |
+| `GET /api/plan?path=<plan>` | one plan: operation summary, body, open and resolved notes, prev and next |
 | `GET /api/tree` | matched files nested by directory |
 | `GET /api/doc[?path=<file>]` | one matched file, or the flat list without `path` |
 | `GET /api/events` | server-sent event on every change to a matched file |
@@ -68,7 +68,7 @@ JSON only, wrapped as `{"state": "success", "data": ...}` or `{"state": "failed"
 
 Derived per order: `status` (latest attempt's, else `pending`), `waiting`, `stale`, `column`.
 
-Order and plan panels also carry `bodyLine` (the file line the body starts at), `annotatable` (the operation isn't closed) and `notes`: each open note on the file, with `line` moved to where its quote is now, or `detached` when the quote is gone.
+Order and plan panels also carry `bodyLine` (the file line the body starts at), `annotatable` (the operation isn't closed) and `notes`: each open note on the file, with `line` moved to where its quote is now, or `detached` when the quote is gone. `resolved` lists the resolved notes on the file, oldest first.
 
 ## Security
 

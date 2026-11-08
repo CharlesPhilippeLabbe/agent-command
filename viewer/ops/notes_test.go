@@ -108,7 +108,7 @@ func TestAnchor(t *testing.T) {
 	}
 }
 
-func TestOpenNotes(t *testing.T) {
+func TestNotes(t *testing.T) {
 	note := func(target, status, created string) *fstest.MapFile {
 		return file("---\nop: vacuum-robot\ntarget: " + target + "\nline: 2\nstatus: " + status + "\ncreated: " + created + "\n---\n# QUOTE\n```\nPLAN BODY\n```\n\n# NOTE\nn\n")
 	}
@@ -121,7 +121,7 @@ func TestOpenNotes(t *testing.T) {
 		dir + "/notes/plan.eeee.md":    file("not a note\n"),
 	}
 	src := []byte("---\nop: vacuum-robot\n---\n# GOAL\nPLAN BODY\n")
-	got := OpenNotes(fsys, dir, "plan.md", src)
+	got, resolved := Notes(fsys, dir, "plan.md", src)
 	var paths []string
 	for _, n := range got {
 		paths = append(paths, n.Path)
@@ -131,10 +131,13 @@ func TestOpenNotes(t *testing.T) {
 	}
 	want := []string{dir + "/notes/plan.aaaa.md", dir + "/notes/plan.bbbb.md", dir + "/notes/plan.0000.md"}
 	if !reflect.DeepEqual(paths, want) {
-		t.Errorf("OpenNotes = %v, want %v", paths, want)
+		t.Errorf("open notes = %v, want %v", paths, want)
+	}
+	if len(resolved) != 1 || resolved[0].Path != dir+"/notes/plan.cccc.md" {
+		t.Errorf("resolved notes = %+v, want only plan.cccc.md", resolved)
 	}
 
-	if none := OpenNotes(fsys, dir, "orders/02-api.md", src); none == nil || len(none) != 0 {
-		t.Errorf("OpenNotes with none = %#v, want empty non-nil", none)
+	if none, _ := Notes(fsys, dir, "orders/02-api.md", src); none == nil || len(none) != 0 {
+		t.Errorf("open notes with none = %#v, want empty non-nil", none)
 	}
 }

@@ -225,6 +225,9 @@ func TestPanelNotes(t *testing.T) {
 	if len(res.Notes) != 1 || res.Notes[0].Path != open.Path || res.Notes[0].Line != 7 || res.Notes[0].Detached {
 		t.Errorf("notes = %+v", res.Notes)
 	}
+	if len(res.Resolved) != 1 || res.Resolved[0].Path != done.Path {
+		t.Errorf("resolved = %+v", res.Resolved)
+	}
 
 	var shut panel
 	if code := call(t, s, "GET", "/api/plan?all=1&path="+url.QueryEscape(shutOp+"/plan.md"), "", "", &shut); code != 200 {

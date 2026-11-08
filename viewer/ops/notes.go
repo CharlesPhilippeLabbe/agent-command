@@ -159,26 +159,32 @@ func (n *Note) anchor(src []byte) {
 
 func abs(x int) int { return max(x, -x) }
 
-// OpenNotes lists the open notes on target (relative to opDir), each anchored
-// in src, the target's current content. Files that don't parse are skipped.
-// Ordered by created, then file name.
-func OpenNotes(fsys fs.FS, opDir, target string, src []byte) []*Note {
-	out := []*Note{}
+// Notes lists the open and the resolved notes on target (relative to opDir),
+// each anchored in src, the target's current content. Files that don't parse
+// are skipped. Both lists are ordered by created, then file name.
+func Notes(fsys fs.FS, opDir, target string, src []byte) (open, resolved []*Note) {
+	open, resolved = []*Note{}, []*Note{}
 	for _, p := range mdFiles(fsys, path.Join(opDir, "notes")) {
 		data, err := fs.ReadFile(fsys, p)
 		if err != nil {
 			continue
 		}
 		n, err := ParseNote(data)
-		if err != nil || n.Target != target || n.Status != "open" {
+		if err != nil || n.Target != target {
 			continue
 		}
 		n.Path = p
 		n.anchor(src)
-		out = append(out, n)
+		if n.Status == "open" {
+			open = append(open, n)
+		} else {
+			resolved = append(resolved, n)
+		}
 	}
-	slices.SortStableFunc(out, func(a, b *Note) int {
+	byCreated := func(a, b *Note) int {
 		return cmp.Or(cmp.Compare(a.Created, b.Created), cmp.Compare(a.Path, b.Path))
-	})
-	return out
+	}
+	slices.SortStableFunc(open, byCreated)
+	slices.SortStableFunc(resolved, byCreated)
+	return open, resolved
 }
