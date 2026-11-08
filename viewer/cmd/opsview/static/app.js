@@ -14,11 +14,72 @@
  *
  *   opsview addition: every render also sees a `markdown` lambda, so a
  *   template turns a raw markdown field into HTML with
- *   {{#markdown}}{{{body}}}{{/markdown}}.
+ *   {{#markdown}}{{{body}}}{{/markdown}}, and an `annotated` lambda that
+ *   does the same and marks which file lines each block came from.
  */
 
 // The markdown lambda: render the section (the raw body), then parse it.
 const markdown = () => (text, render) => marked.parse(render(text));
+
+// The annotated lambda: like markdown, but every block a note can sit on
+// carries data-line and data-end, its first and last line in the source
+// file. Lines count from the rendered data's bodyLine, the file line the
+// body starts at, so the server can quote exactly those lines.
+const annotated = function () {
+    const bodyLine = this.bodyLine || 1;
+    return (text, render) => {
+        const tokens = annotator.lexer(render(text));
+        tagLines(tokens, bodyLine);
+        return annotator.parser(tokens);
+    };
+};
+
+// tagLines gives each block token its first and last file line, starting at
+// line: the tokens' raw texts follow one another, newlines included. Nested
+// blocks (list items, what a list item or blockquote holds) count from
+// their parent's first line the same way.
+function tagLines(tokens, line) {
+    for (const t of tokens) {
+        t.line = line;
+        t.end = line + t.raw.replace(/\n+$/, "").split("\n").length - 1;
+        if (t.items) tagLines(t.items, line);
+        else if (t.tokens && (t.type === "list_item" || t.type === "blockquote")) tagLines(t.tokens, line);
+        line += t.raw.split("\n").length - 1;
+    }
+}
+
+// lineAttrs puts data-line and data-end on the first tag of html.
+function lineAttrs(html, token) {
+    if (token.line === undefined) return html;
+    return html.replace(/^(\s*<[a-z0-9]+)/i, `$1 data-line="${token.line}" data-end="${token.end}"`);
+}
+
+// withLines wraps marked's default renderer method name: it renders as
+// marked does, then adds the line attributes.
+function withLines(name) {
+    return function (token) { return lineAttrs(marked.Renderer.prototype[name].call(this, token), token); };
+}
+
+// A marked of its own, so the docs page's `marked` stays untouched. A table
+// row has no token of its own: the header row is the table's first line,
+// body row i is line + 2 + i (the separator line sits between).
+const annotator = new marked.Marked({
+    renderer: {
+        heading: withLines("heading"),
+        paragraph: withLines("paragraph"),
+        listitem: withLines("listitem"),
+        code: withLines("code"),
+        blockquote: withLines("blockquote"),
+        table(token) {
+            let row = 0;
+            return marked.Renderer.prototype.table.call(this, token).replace(/<tr>/g, () => {
+                const line = row === 0 ? token.line : token.line + 1 + row;
+                row++;
+                return `<tr data-line="${line}" data-end="${line}">`;
+            });
+        },
+    },
+});
 
 htmx.defineExtension("mustache-tmpl", {
     onEvent: function(name, evt) {
@@ -51,7 +112,7 @@ htmx.defineExtension("mustache-tmpl", {
             console.error(`mustache-tmpl: response for #${templateId} was not JSON`, err);
             return text;
         }
-        return Mustache.render(templateEl.textContent, Object.assign({ markdown }, data), templatePartials());
+        return Mustache.render(templateEl.textContent, Object.assign({ markdown, annotated }, data), templatePartials());
     },
 });
 
@@ -199,6 +260,8 @@ document.addEventListener("htmx:afterSwap", (evt) => {
 
 // A missing doc or order answers 404 with {state: "failed", error}; htmx
 // doesn't swap errors, so show the message instead of the previous content.
+// The message goes in the request's target, not the element that sent it:
+// for a note form that is its status line, so the typed text stays.
 document.addEventListener("htmx:responseError", (evt) => {
     if (!evt.detail.elt.hasAttribute("mustache-tmpl")) return;
     let msg = evt.detail.xhr.statusText;
@@ -206,18 +269,68 @@ document.addEventListener("htmx:responseError", (evt) => {
     const p = document.createElement("p");
     p.className = "error";
     p.textContent = msg;
-    evt.detail.elt.replaceChildren(p);
+    evt.detail.target.replaceChildren(p);
+});
+
+// ---- confirm dialog --------------------------------------------------------
+
+// An element with the confirm-dialog attribute asks first: its request is
+// held, #confirm-modal shows confirm-modal-tmpl rendered with the element's
+// data-* values, and only its confirm button sends the request. htmx:confirm
+// fires before every request, so the attribute is the gate.
+document.addEventListener("htmx:confirm", (evt) => {
+    const elt = evt.detail.elt;
+    const dialog = document.getElementById("confirm-modal");
+    const tmpl = document.getElementById("confirm-modal-tmpl");
+    if (!elt.hasAttribute("confirm-dialog") || !dialog || !tmpl) return;
+    evt.preventDefault();
+    dialog.innerHTML = Mustache.render(tmpl.textContent, { ...elt.dataset });
+    dialog.querySelector("[data-confirm]").addEventListener("click", () => {
+        dialog.close();
+        evt.detail.issueRequest(true); // skip htmx's own confirm, just send
+    });
+    dialog.querySelector("[data-close]").addEventListener("click", () => dialog.close());
+    dialog.showModal();
+});
+
+// Backdrop click closes (native <dialog> doesn't). Esc already works.
+document.addEventListener("click", (evt) => {
+    const dialog = evt.target;
+    if (dialog.id !== "confirm-modal") return;
+    const r = dialog.getBoundingClientRect();
+    const inside = evt.clientX >= r.left && evt.clientX <= r.right && evt.clientY >= r.top && evt.clientY <= r.bottom;
+    if (!inside) dialog.close();
 });
 
 // Hot reload: the server pings on any change to a matched file, and every
 // mount point on the page re-fetches. A reconnect means the server restarted
-// (air rebuild), so the page itself may be stale.
+// (air rebuild), so the page itself may be stale. While #panel holds a note
+// form with unsent text, its reload is held instead, so the draft survives
+// an officer writing a report meanwhile; releaseReload() reloads it once the
+// form is gone. Only a hot reload waits: navigating replaces the panel.
 const events = new EventSource("/api/events");
 let connected = false;
 events.onopen = () => {
     if (connected) location.reload();
     connected = true;
 };
+let panelHeld = false;
+
+function holdsDraft(el) {
+    return [...el.querySelectorAll(".note-form textarea")].some((t) => t.value.trim());
+}
+
+function releaseReload() {
+    const panel = document.getElementById("panel");
+    if (panelHeld && panel && !holdsDraft(panel)) {
+        panelHeld = false;
+        htmx.trigger(panel, "reload");
+    }
+}
+
 events.onmessage = () => {
-    document.querySelectorAll("[mustache-tmpl]").forEach((el) => htmx.trigger(el, "reload"));
+    document.querySelectorAll("[mustache-tmpl]").forEach((el) => {
+        if (el.id === "panel" && holdsDraft(el)) panelHeld = true;
+        else htmx.trigger(el, "reload");
+    });
 };

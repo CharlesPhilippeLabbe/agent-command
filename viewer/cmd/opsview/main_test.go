@@ -18,7 +18,7 @@ func testServer(t *testing.T, dir string) *server {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { root.Close() })
-	s := &server{fsys: root.FS(), dir: dir, name: dir, pats: []string{"**/*.md"}, subs: map[chan struct{}]bool{}}
+	s := &server{root: root, fsys: root.FS(), dir: dir, name: dir, pats: []string{"**/*.md"}, subs: map[chan struct{}]bool{}}
 	if err := s.startWatch(); err != nil {
 		t.Fatal(err)
 	}

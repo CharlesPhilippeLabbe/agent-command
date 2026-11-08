@@ -152,6 +152,11 @@
       {{/order}}
     </div>
     <div class="panel-actions">
+      <!-- annotate mode: a tap on a block opens a note form (ops.js); closed
+           operations take no new notes, so no toggle -->
+      {{#annotatable}}
+      <button class="btn-ghost annotate" onclick="toggleAnnotate()" title="tap a block to leave a note">annotate</button>
+      {{/annotatable}}
       <!-- each icon is the window with the panel's share filled in; app.css
            turns them a quarter on small screens, where the panel is a sheet -->
       <div class="sizes" role="group" aria-label="panel size">
@@ -227,7 +232,15 @@
   <ul class="problems">{{#op.problems}}<li>{{.}}</li>{{/op.problems}}</ul>
   {{/op.problems.length}}{{/order}}
 
-  <article class="md" data-path="{{path}}">{{#markdown}}{{{body}}}{{/markdown}}</article>
+  <!-- open notes on this file: detached ones (their quote is gone) in the
+       tray, the rest held hidden until ops.js moves each under its block -->
+  <section class="notes-detached">
+    <h2>Detached notes</h2>
+    {{#notes}}{{#detached}}{{> note-card}}{{/detached}}{{/notes}}
+  </section>
+  <div class="notes-holder" hidden>{{#notes}}{{^detached}}{{> note-card}}{{/detached}}{{/notes}}</div>
+
+  <article class="md" data-path="{{path}}">{{#annotated}}{{{body}}}{{/annotated}}</article>
   <p class="tagline"><a href="/?path={{path}}">open in docs</a></p>
 
   <!-- steps through every plan, order and report on the board, in order -->
@@ -247,6 +260,64 @@
     {{/next}}
   </nav>
   {{/data}}
+</script>
+
+<!-- One open note. The quote shows only in the detached tray; under its
+     block the block itself is the quote. -->
+<script type="text/x-template" id="note-card">
+  <div class="note-card" data-note="{{path}}" data-note-line="{{line}}">
+    <pre class="note-quote">{{quote}}</pre>
+    <p class="note-text">{{text}}</p>
+    <div class="note-foot">
+      <span class="note-date">{{created}}</span>
+      <button type="button" class="btn-ghost" onclick="editNote(this)">edit</button>
+      <button type="button" class="btn-ghost"
+              hx-put="/api/notes" hx-vals='{"path": "{{path}}", "status": "resolved"}'
+              hx-target="next .note-status" mustache-tmpl="note-result">resolve</button>
+      <button type="button" class="btn-ghost danger"
+              hx-delete="/api/notes" hx-vals='{"path": "{{path}}"}'
+              hx-target="next .note-status" mustache-tmpl="note-result"
+              confirm-dialog data-quote="{{quote}}">delete</button>
+      <span class="note-status"></span>
+    </div>
+  </div>
+</script>
+
+<!-- A new note (target, line, end: the tapped block) or an edit (path). -->
+<script type="text/x-template" id="note-form">
+  <form class="note-form" {{#path}}hx-put{{/path}}{{^path}}hx-post{{/path}}="/api/notes"
+        hx-target="find .note-status" mustache-tmpl="note-result">
+    {{#path}}<input type="hidden" name="path" value="{{path}}">{{/path}}
+    {{^path}}
+    <input type="hidden" name="target" value="{{target}}">
+    <input type="hidden" name="line" value="{{line}}">
+    <input type="hidden" name="end" value="{{end}}">
+    {{/path}}
+    <textarea name="text" rows="3" placeholder="note">{{text}}</textarea>
+    <div class="note-foot">
+      <button type="submit" class="btn btn-sm">save</button>
+      <button type="button" class="btn-ghost" onclick="closeNoteForm(this.form)">cancel</button>
+      <span class="note-status"></span>
+    </div>
+  </form>
+</script>
+
+<!-- What a note request answers, in its status line. Errors replace it
+     (app.js). The panel itself refreshes through hot reload. -->
+<script type="text/x-template" id="note-result">{{#data}}saved{{/data}}</script>
+
+<!-- Delete-confirm dialog for [confirm-dialog] elements (app.js). Native
+     <dialog>: the browser gives the backdrop, centring, Esc-to-close and
+     focus trap. Rendered with the element's data-* values each time. -->
+<dialog id="confirm-modal" class="modal"></dialog>
+<script type="text/x-template" id="confirm-modal-tmpl">
+  <h2>Delete note</h2>
+  <p>This permanently deletes the note on:</p>
+  <pre>{{quote}}</pre>
+  <div class="modal-actions">
+    <button type="button" data-close>cancel</button>
+    <button type="button" class="danger" data-confirm>delete</button>
+  </div>
 </script>
 </body>
 </html>

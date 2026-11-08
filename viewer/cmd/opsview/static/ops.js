@@ -48,8 +48,10 @@ function panelURL() {
 }
 
 // #panel's htmx:configRequest: fetch the selection, or empty the panel when
-// there is none.
+// there is none. Requests from inside the panel (note forms and buttons)
+// bubble here too; they keep their own path.
 function panelRequest(evt, panel) {
+    if (evt.detail.elt !== panel) return;
     const url = panelURL();
     if (url) {
         evt.detail.path = url;
@@ -129,6 +131,10 @@ function markActive() {
     markEach("#ops [data-panel][data-path]", (el) => el.dataset.path === selected);
     markEach("#panel .panel-tabs a", (a) => a.dataset.tab === param("report"));
     markEach("#panel .sizes button", (b) => b.dataset.size === panelSizeNow);
+    markEach("#panel .annotate", () => annotateOn);
+    // Taps only add notes where the panel offers the toggle: not on a
+    // closed operation.
+    document.body.toggleAttribute("data-annotate", annotateOn && !!document.querySelector("#panel .annotate"));
     markFilter();
 }
 
@@ -145,6 +151,7 @@ document.addEventListener("htmx:afterSwap", (evt) => {
         panelToTop = false;
     }
     if (target.id === "ops") observeBoards(target);
+    if (target.id === "panel") placeNotes(target);
     markActive();
 });
 
@@ -232,3 +239,109 @@ function hoverCard(on) {
 }
 document.addEventListener("mouseover", hoverCard(true));
 document.addEventListener("mouseout", hoverCard(false));
+
+// ---- notes -------------------------------------------------------------------
+
+// Annotate mode: on, a tap on a block of the panel's document opens a note
+// form under it. Remembered per browser, like the panel size.
+let annotateOn = false;
+try { annotateOn = localStorage.getItem("annotate") === "1"; } catch (err) {}
+
+function toggleAnnotate() {
+    annotateOn = !annotateOn;
+    try { annotateOn ? localStorage.setItem("annotate", "1") : localStorage.removeItem("annotate"); } catch (err) {}
+    markActive();
+}
+
+// After each panel render, move every open note's card from the hidden
+// holder to the block it is about: the first block of the document whose
+// first line is the note's line. No such block: the detached tray.
+function placeNotes(panel) {
+    const article = panel.querySelector("article[data-path]");
+    const tray = panel.querySelector(".notes-detached");
+    panel.querySelectorAll(".notes-holder .note-card").forEach((card) => {
+        const block = article?.querySelector(`[data-line="${card.dataset.noteLine}"]`);
+        if (block) placeNote(block, card);
+        else tray.appendChild(card);
+    });
+}
+
+// placeNote puts el, a note card or form, under block, after any notes
+// already there: in a row of its own after a table row, inside a list item,
+// else right after the block.
+function placeNote(block, el) {
+    if (block.tagName === "TR") {
+        const row = document.createElement("tr");
+        row.className = "note-row";
+        const cell = row.insertCell();
+        cell.colSpan = block.cells.length;
+        cell.appendChild(el);
+        let after = block;
+        while (after.nextElementSibling?.classList.contains("note-row")) after = after.nextElementSibling;
+        after.after(row);
+    } else if (block.tagName === "LI") {
+        block.appendChild(el);
+    } else {
+        let after = block;
+        while (after.nextElementSibling?.matches(".note-card, .note-form")) after = after.nextElementSibling;
+        after.after(el);
+    }
+}
+
+// noteForm renders the note-form template; data is the tapped block's
+// target, line and end, or for an edit the note's path and text.
+function noteForm(data) {
+    const wrap = document.createElement("div");
+    wrap.innerHTML = Mustache.render(document.getElementById("note-form").textContent, data);
+    return wrap.firstElementChild;
+}
+
+// A tap on a block, annotate on: a new-note form under it. One at a time:
+// a form holding text stays put, an empty one moves to the new block. Taps
+// on links, on notes, or ending a text selection are left alone.
+document.addEventListener("click", (evt) => {
+    if (!document.body.hasAttribute("data-annotate")) return;
+    const article = evt.target.closest("#panel article[data-path]");
+    if (!article || evt.target.closest("a, .note-card, .note-form, .note-row")) return;
+    if (String(getSelection())) return;
+    const block = evt.target.closest("[data-line]");
+    if (!block || !article.contains(block)) return;
+
+    const open = article.querySelector(".note-form.new");
+    if (open) {
+        if (open.querySelector("textarea").value.trim()) return;
+        closeNoteForm(open);
+    }
+    const form = noteForm({ target: article.dataset.path, line: block.dataset.line, end: block.dataset.end });
+    form.classList.add("new");
+    placeNote(block, form);
+    htmx.process(form);
+    form.querySelector("textarea").focus();
+});
+
+// Edit: the card makes way for a form holding its text; cancel brings it back.
+function editNote(button) {
+    const card = button.closest(".note-card");
+    const form = noteForm({ path: card.dataset.note, text: card.querySelector(".note-text").textContent });
+    form.classList.add("edit");
+    card.hidden = true;
+    card.after(form);
+    htmx.process(form);
+    form.querySelector("textarea").focus();
+}
+
+// closeNoteForm removes a note form (and the table row it sat in, when
+// empty), shows the card an edit hid, and lets a held hot reload run.
+function closeNoteForm(form) {
+    if (form.classList.contains("edit")) form.previousElementSibling.hidden = false;
+    const row = form.closest(".note-row");
+    form.remove();
+    if (row && !row.querySelector(".note-card, .note-form")) row.remove();
+    releaseReload();
+}
+
+// A saved note closes its form; hot reload then brings the card.
+document.addEventListener("htmx:afterRequest", (evt) => {
+    const form = evt.detail.elt;
+    if (evt.detail.successful && form.matches?.(".note-form")) closeNoteForm(form);
+});

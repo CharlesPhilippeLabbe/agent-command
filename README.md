@@ -54,8 +54,9 @@ General resolves every gray zone with the commander while planning, so orders de
 
 1. `/ops:general <feature>`: interview, alternatives, codename, plan, orders.
 2. Hand each order to its rank, in any session: `/ops:captain .saved/ops/vacuum-robot/orders/02-schedule.md`. Officer checks, asks for go, executes, reports.
-3. `/ops:general vacuum-robot`: debrief. Raises blockers and assumptions; ratified assumptions become plan decisions; answers go into the orders (rev bumped); follow-up orders issued; dropped orders get a report from General.
-4. Retry a revised order with the same handoff command.
+3. Review plan, orders and reports in [opsview](viewer/), and tap a block to leave a note. Notes wait in `notes/` for the next debrief.
+4. `/ops:general vacuum-robot`: debrief. Raises blockers and assumptions; ratified assumptions become plan decisions; answers go into the orders (rev bumped); follow-up orders issued; dropped orders get a report from General; open notes get answered and resolved.
+5. Retry a revised order with the same handoff command.
 
 ## Files (in the target repo)
 
@@ -64,6 +65,7 @@ General resolves every gray zone with the commander while planning, so orders de
   plan.md
   orders/NN-<slug>.md       # edited only by commander or General; rev bumped, logged in plan
   reports/NN-<slug>.K.md    # attempt K, one per run; only an in-progress attempt is overwritten, by its final report
+  notes/<target>.<hex>.md   # commander notes from opsview; open until General resolves
 ```
 
 `<operation>` is a two-word kebab-case codename only remotely related to the feature, e.g. `vacuum-robot` for an auto-clean feature.
@@ -72,8 +74,8 @@ Report statuses: `in-progress` (written at go, replaced by the final report; cla
 
 Orders carry `risk: low|medium|high` and, from `medium` up, a RISKS section; officers show both in the greenlight.
 
-Formats in [templates/](templates/): [plan](templates/plan.md), [order](templates/order.md), [report](templates/report.md), [style](templates/style.md), shared [officer procedure](templates/officer.md).
+Formats in [templates/](templates/): [plan](templates/plan.md), [order](templates/order.md), [report](templates/report.md), [note](templates/note.md), [style](templates/style.md), shared [officer procedure](templates/officer.md).
 
 ## Viewer
 
-[viewer/](viewer/) holds `opsview`, a local read-only dashboard of every operation: boards by dependency, order and report panels, docs browser. See [viewer/README.md](viewer/README.md).
+[viewer/](viewer/) holds `opsview`, a local dashboard of every operation that writes only notes: boards by dependency, order and report panels, docs browser. See [viewer/README.md](viewer/README.md).

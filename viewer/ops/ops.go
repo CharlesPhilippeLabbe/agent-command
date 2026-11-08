@@ -1,6 +1,7 @@
 // Package ops reads .saved/ops/<op>/ operations (plan, orders, reports) from
 // their YAML frontmatter and derives order status and dependency state.
-// Only frontmatter is kept: bodies are read and discarded.
+// Only frontmatter is kept: bodies are read and discarded. Note files
+// (notes.go) are the exception: they are read in full, bodies included.
 package ops
 
 import (

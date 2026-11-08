@@ -97,7 +97,9 @@ func summary(op *ops.Operation) opSummary {
 // panel is what /api/order and /api/plan return: one file's markdown body,
 // the operation it belongs to and the stops either side of it on the board.
 // Path is the file whose body this is; OrderPath, Order and Report are set
-// for an order, and Report too when a report tab is open.
+// for an order, and Report too when a report tab is open. Notes are the open
+// notes on Path; BodyLine is the file line Body starts at, so the page can
+// tell which lines a rendered block came from.
 type panel struct {
 	Path      string      `json:"path"`
 	OrderPath string      `json:"orderPath,omitempty"`
@@ -108,6 +110,10 @@ type panel struct {
 	Prev      *step       `json:"prev"`
 	Here      *step       `json:"here"`
 	Next      *step       `json:"next"`
+
+	Annotatable bool        `json:"annotatable"` // new notes allowed: the operation isn't closed
+	BodyLine    int         `json:"bodyLine"`
+	Notes       []*ops.Note `json:"notes"`
 }
 
 // step is one stop of the panel's prev/next walk.
@@ -135,6 +141,9 @@ func (s *server) routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/order", s.apiOrder)
 	mux.HandleFunc("GET /api/plan", s.apiPlan)
 	mux.HandleFunc("GET /api/events", s.events)
+	mux.HandleFunc("POST /api/notes", s.apiNoteCreate)
+	mux.HandleFunc("PUT /api/notes", s.apiNoteUpdate)
+	mux.HandleFunc("DELETE /api/notes", s.apiNoteDelete)
 	mux.HandleFunc("GET /files/{path...}", s.rawFile)
 }
 
@@ -211,7 +220,7 @@ func (s *server) apiOrder(w http.ResponseWriter, r *http.Request) {
 		}
 		res.Path, href = rp, reportHref(p, rp)
 	}
-	s.writePanel(w, r, res, href)
+	s.writePanel(w, r, op, res, href)
 }
 
 // One operation's plan in full.
@@ -222,12 +231,12 @@ func (s *server) apiPlan(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusNotFound, "not a plan: "+p)
 		return
 	}
-	s.writePanel(w, r, &panel{Path: p, Op: summary(op)}, planHref(p))
+	s.writePanel(w, r, op, &panel{Path: p, Op: summary(op)}, planHref(p))
 }
 
-// writePanel adds the body of res.Path and the stops around href, on the
-// board as /api/ops shows it for the same ?all= and ?project=.
-func (s *server) writePanel(w http.ResponseWriter, r *http.Request, res *panel, href string) {
+// writePanel adds the body of res.Path, its open notes and the stops around
+// href, on the board as /api/ops shows it for the same ?all= and ?project=.
+func (s *server) writePanel(w http.ResponseWriter, r *http.Request, op *ops.Operation, res *panel, href string) {
 	src, err := fs.ReadFile(s.fsys, res.Path)
 	if err != nil {
 		writeJSONError(w, http.StatusNotFound, err.Error())
@@ -235,6 +244,9 @@ func (s *server) writePanel(w http.ResponseWriter, r *http.Request, res *panel, 
 	}
 	_, body, _ := ops.SplitFrontmatter(src)
 	res.Body = string(body)
+	res.BodyLine = ops.BodyLine(src)
+	res.Annotatable = op.Plan.Status != "closed"
+	res.Notes = ops.OpenNotes(s.fsys, op.Dir, strings.TrimPrefix(res.Path, op.Dir+"/"), src)
 	res.Prev, res.Here, res.Next = neighbours(walk(s.visibleOps(r)), href)
 	writeJSON(w, http.StatusOK, res)
 }

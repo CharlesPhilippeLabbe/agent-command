@@ -28,6 +28,7 @@ var assets embed.FS
 const defaultPattern = "**/.saved/ops/**/*.md"
 
 type server struct {
+	root *os.Root // writes (notes only) go through it, so they can't escape the directory
 	fsys fs.FS
 	dir  string // the same directory as fsys, as a path, for the watcher
 	name string
@@ -46,7 +47,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	s := &server{fsys: root.FS(), dir: dir, name: dir, pats: pats, subs: map[chan struct{}]bool{}}
+	s := &server{root: root, fsys: root.FS(), dir: dir, name: dir, pats: pats, subs: map[chan struct{}]bool{}}
 	if err := s.startWatch(); err != nil {
 		log.Fatal(err)
 	}
