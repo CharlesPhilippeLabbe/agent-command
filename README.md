@@ -52,7 +52,7 @@ General resolves every gray zone with the commander while planning, so orders de
 
 ## Workflow
 
-1. `/ops:general <feature>`: interview, alternatives, codename, plan, orders.
+1. `/ops:general <feature>`: interview, alternatives, codename, plan, orders. Orders are shown in chat, or on your yes written straight away for review in opsview (step 3).
 2. Hand each order to its rank, in any session: `/ops:captain .saved/ops/vacuum-robot/orders/02-schedule.md`. Officer checks, asks for go, executes, reports.
 3. Review plan, orders and reports in [opsview](viewer/), and tap a block to leave a note. Notes wait in `notes/` for the next debrief.
 4. `/ops:general vacuum-robot`: debrief. Raises blockers and assumptions; ratified assumptions become plan decisions; answers go into the orders (rev bumped); follow-up orders issued; dropped orders get a report from General; open notes get answered and resolved.

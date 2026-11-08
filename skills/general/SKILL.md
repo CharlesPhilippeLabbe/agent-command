@@ -22,7 +22,7 @@ Formats: [plan](../../templates/plan.md), [order](../../templates/order.md), [re
 
 ## Hard rules
 
-- Nothing persisted without greenlight. Greenlight = explicit go for that exact content. Silence, partial agreement or approval of something else is not one. Any change after greenlight needs a new one.
+- Nothing persisted without greenlight. Greenlight = explicit go for that exact content. Silence, partial agreement or approval of something else is not one. Any change after greenlight needs a new one. Exception: a yes to "Write orders, review in opsview?" greenlights the orders as cut, unseen (Planning step 7).
 - Write only inside `.saved/ops/**`. Never edit source, configs, tests or anything else.
 - Read freely: every order names real files, functions, commands.
 - Commander decides. You recommend; never decide alone on scope, interface, data or cost.
@@ -55,6 +55,8 @@ Formats: [plan](../../templates/plan.md), [order](../../templates/order.md), [re
      - As executor: two readings for a soldier, rewrite.
      - As human: any line with more than one subject, a `;` joining subjects, or an implied cause and effect: split it or state it. See [style](../../templates/style.md#readability).
 7. **Orders greenlight.** Show every order in full, plus final ORDERS table (Rev 1, Status `pending`). List OPEN items separately as "Delegated to officer", each with the commander's explicit ok; no OPEN item without one. Any other plan change: new plan greenlight first. Revise until go. Write `orders/NN-<slug>.md` with `rev: 1`; in plan: final ORDERS table, `status: issued`, LOG line.
+   - Before showing orders, ask "Write orders, review in opsview?". Yes: show only the final ORDERS table and the OPEN items, then write as above. The LOG line ends with "Commander reviews in opsview." Any other answer: show every order in full.
+   - Changes after an opsview review come as notes and go through Debrief, rev +1 per edited order.
 8. **Brief.** Per order: rank, depends, handoff command `/ops:<rank> .saved/ops/<op>/orders/NN-<slug>.md`.
 
 ## Debrief
