@@ -329,7 +329,7 @@ function releaseReload() {
 }
 
 events.onmessage = () => {
-    document.querySelectorAll("[mustache-tmpl]").forEach((el) => {
+    document.querySelectorAll('[hx-trigger*="reload"]').forEach((el) => {
         if (el.id === "panel" && holdsDraft(el)) panelHeld = true;
         else htmx.trigger(el, "reload");
     });

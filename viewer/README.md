@@ -22,7 +22,7 @@ Open http://127.0.0.1:8888/ops.html for the dashboard, or http://127.0.0.1:8888/
 | `--srcdir` | `.` | directory to scan; a positional argument does the same |
 | `--port` | `8888` | |
 | `--addr` | `127.0.0.1` | bind address |
-| `--pattern` | `**/.saved/ops/**/*.md` | glob of files the docs browser shows and the watcher follows; `**` allowed, repeatable |
+| `--pattern` | `**/.saved/ops/**/*.md` | glob of files the docs browser shows and the watcher follows; `**` allowed, repeatable. Matched against paths relative to `--srcdir`; an absolute pattern is allowed when it is under `--srcdir`, one outside stops opsview at startup. Also decides which operations show (their `plan.md` must match) and which directories are walked and watched: a pattern starting with `**` walks all of `--srcdir`, `*/.saved/ops/**/*.md` only one level down |
 
 Directories named `.git`, `node_modules` and `.venv` are skipped.
 

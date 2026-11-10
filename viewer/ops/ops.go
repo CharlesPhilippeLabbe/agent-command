@@ -130,28 +130,32 @@ func split(src []byte) (fm, body []byte, ok bool) {
 }
 
 // Walk calls fn with every file under fsys in lexical order, skipping
-// skipDirs and anything unreadable.
-func Walk(fsys fs.FS, fn func(p string)) {
+// skipDirs, any directory below the root that enter rejects, and anything
+// unreadable. enter gets the directory's slash path; skipDirs are skipped
+// before it is asked.
+func Walk(fsys fs.FS, enter func(dir string) bool, fn func(p string)) {
 	fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, err error) error {
 		switch {
 		case err != nil:
 		case !d.IsDir():
 			fn(p)
-		case Skipped(d.Name()):
+		case p == ".":
+		case Skipped(d.Name()) || !enter(p):
 			return fs.SkipDir
 		}
 		return nil
 	})
 }
 
-// Discover loads every operation found at **/.saved/ops/<op>/plan.md.
-func Discover(fsys fs.FS) []*Operation {
+// Discover loads one operation per <...>/.saved/ops/<op>/plan.md in files,
+// in list order. It doesn't walk: files is what the caller matched.
+func Discover(fsys fs.FS, files []string) []*Operation {
 	out := []*Operation{}
-	Walk(fsys, func(p string) {
+	for _, p := range files {
 		if isPlan(p) {
 			out = append(out, Load(fsys, path.Dir(p)))
 		}
-	})
+	}
 	return out
 }
 

@@ -42,7 +42,7 @@ func noteFixture(t *testing.T) (*server, string) {
 			t.Fatal(err)
 		}
 	}
-	return testServer(t, dir), dir
+	return testServer(t, dir, "**/*.md"), dir
 }
 
 // call sends one request to s and decodes the envelope's data into out, when

@@ -340,8 +340,12 @@ function closeNoteForm(form) {
     releaseReload();
 }
 
-// A saved note closes its form; hot reload then brings the card.
+// A saved note closes its form; the server's ping then reloads the panel.
+// Once the form is gone htmx fires afterRequest again on a parent, with the
+// same detail: only the event on the form itself counts, or the form would
+// close twice.
 document.addEventListener("htmx:afterRequest", (evt) => {
     const form = evt.detail.elt;
+    if (evt.target !== form) return;
     if (evt.detail.successful && form.matches?.(".note-form")) closeNoteForm(form);
 });

@@ -2,6 +2,7 @@ package ops
 
 import (
 	"encoding/json"
+	"io/fs"
 	"reflect"
 	"strings"
 	"testing"
@@ -25,8 +26,17 @@ func fixture() fstest.MapFS {
 	}
 }
 
+// files lists every file of fsys, as the server's walk would with a
+// pattern matching everything.
+func files(fsys fs.FS) []string {
+	var out []string
+	Walk(fsys, func(string) bool { return true }, func(p string) { out = append(out, p) })
+	return out
+}
+
 func TestDiscover(t *testing.T) {
-	got := Discover(fixture())
+	fsys := fixture()
+	got := Discover(fsys, files(fsys))
 	if len(got) != 1 {
 		t.Fatalf("got %d operations, want 1", len(got))
 	}
@@ -169,5 +179,20 @@ func TestSplitFrontmatter(t *testing.T) {
 	_, body, _ = SplitFrontmatter([]byte("---\r\nop: x\r\n---\r\nbody\r\n"))
 	if string(body) != "body\n" {
 		t.Errorf("crlf body %q", body)
+	}
+}
+
+// Discover loads only the plans in its list: a plan the pattern doesn't
+// match makes no operation.
+func TestDiscoverOnlyListed(t *testing.T) {
+	fsys := fixture()
+	var list []string
+	for _, p := range files(fsys) {
+		if p != dir+"/plan.md" {
+			list = append(list, p)
+		}
+	}
+	if got := Discover(fsys, list); len(got) != 0 {
+		t.Fatalf("got %d operations, want 0", len(got))
 	}
 }
