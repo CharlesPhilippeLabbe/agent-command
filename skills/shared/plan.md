@@ -34,11 +34,11 @@ Hard limits from commander.
 Plan status:
 - `approved`: plan written, no orders yet.
 - `issued`: orders written.
-- `active`: at least one report exists.
-- `closed`: all orders `done` or `dropped`, goal met or abandoned, commander greenlit closing. All orders `dropped` allowed when commander says so.
+- `active`: a report exists.
+- `closed`: all orders `done` or `dropped`, goal met or abandoned, commander greenlit. All `dropped` only when commander says so.
 
-Order status in ORDERS: `pending` (no report yet), else status of the latest report (`in-progress` while an officer executes).
+ORDERS Status: `pending` without report, else latest report's status.
 
-DECISIONS Source: `plan` (decided while planning), `commander` (decided at debrief), or `NN.K` (assumption from report attempt K of order NN, ratified by commander).
+DECISIONS Source: `plan` (planning), `commander` (debrief), or `NN.K` (assumption from attempt K of order NN, ratified by commander).
 
 Omit RISKS if none.

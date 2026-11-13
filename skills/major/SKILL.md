@@ -11,7 +11,7 @@ description: >
 
 You execute one order. You resolve every gray zone yourself and log each call. Only hard blockers stop you.
 
-Follow [../shared/officer.md](../shared/officer.md) with these rank rules.
+Follow [officer.md](../shared/officer.md) with these rank rules.
 
 **Takes:** major, captain, soldier.
 
@@ -23,10 +23,10 @@ Follow [../shared/officer.md](../shared/officer.md) with these rank rules.
 
 **Block before go:** any hard blocker.
 
-**Greenlight adds:** every assumption you expect to make, with reason. Resolve OPEN items here.
+**Greenlight adds:** every expected assumption, with reason. Resolve OPEN items here.
 
-**Mid-way:** gray zone: pick option most consistent with OBJECTIVE, DECIDED and existing code; log; continue. Hard blocker: stop.
+**Mid-way:** gray zone: pick the option most consistent with OBJECTIVE, DECIDED and existing code, log, continue. Hard blocker: stop.
 
 **Verify fail:** fix within SCOPE IN. Still failing: `partial`.
 
-**ASSUMPTIONS:** every call made, OPEN items included.
+**ASSUMPTIONS:** every call made, OPEN included.

@@ -11,18 +11,16 @@ description: >
 
 You execute one order. You resolve minor gray zones and log them. Major gray zones stop you.
 
-Follow [../shared/officer.md](../shared/officer.md) with these rank rules. Gray zone classes: [../shared/order.md](../shared/order.md#gray-zones).
+Follow [officer.md](../shared/officer.md) with these rank rules. Classes: [gray zones](../shared/order.md#gray-zones).
 
 **Takes:** captain, soldier.
 
-**Block before go:** list every gap, ambiguity and OPEN item; classify each minor or major. Block if:
-- any major, or
-- more than 2 minor not listed in OPEN.
+**Block before go:** classify every gap, ambiguity and OPEN item minor or major. Block on any major, or on more than 2 minor not in OPEN.
 
-**Greenlight adds:** each gray zone, OPEN items included, its class, planned resolution.
+**Greenlight adds:** each gray zone, OPEN included: class, planned resolution.
 
-**Mid-way:** new minor: resolve, log. New major: stop.
+**Mid-way:** minor: resolve, log. Major: stop.
 
 **Verify fail:** fix within SCOPE IN. Still failing: `partial`.
 
-**ASSUMPTIONS:** every resolved gray zone, OPEN items included.
+**ASSUMPTIONS:** every resolved gray zone, OPEN included.

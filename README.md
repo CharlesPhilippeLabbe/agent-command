@@ -48,7 +48,7 @@ claude --plugin-dir /path/to/agent-command
 | `/ops:captain` | yes | resolves minor, blocks on major or on more than 2 unlisted minor | gray zones and planned resolutions | captain, soldier |
 | `/ops:soldier` | yes | none: any ambiguity blocks | objective, files, steps | soldier |
 
-General resolves every gray zone with the commander while planning, so orders default to `soldier`. A higher rank is issued only when the commander delegates a named gray zone, listed in OPEN. Plans and orders keep one subject per line so a human can review them.
+General treats your answers as input, not gospel: it questions them until you mark one definitive. Orders default to `soldier`. Per order, General weighs the cost of pinning every point down for a soldier; points hard to predict before execution it proposes to delegate as `captain`, each listed in OPEN for your approval. Officers retry any order whose content changed since the last attempt; a missing rev bump is logged by General at debrief, not refused. Plans and orders keep one subject per line so a human can review them.
 
 ## Workflow
 
@@ -56,7 +56,7 @@ General resolves every gray zone with the commander while planning, so orders de
 2. Hand each order to its rank, in any session: `/ops:captain .saved/ops/vacuum-robot/orders/02-schedule.md`. Officer checks, asks for go, executes, reports.
 3. Review plan, orders and reports in [opsview](viewer/), and tap a block to leave a note. Notes wait in `notes/` for the next debrief.
 4. `/ops:general vacuum-robot`: debrief. Raises blockers and assumptions; ratified assumptions become plan decisions; answers go into the orders (rev bumped); follow-up orders issued; dropped orders get a report from General; open notes get answered and resolved.
-5. Retry a revised order with the same handoff command.
+5. Retry a revised order with the same handoff command. A `blocked` or `partial` order also retries unchanged under `/ops:captain` or `/ops:major` when its blockers fit that rank.
 
 ## Files (in the target repo)
 
@@ -64,7 +64,7 @@ General resolves every gray zone with the commander while planning, so orders de
 .saved/ops/<operation>/
   plan.md
   orders/NN-<slug>.md       # edited only by commander or General; rev bumped, logged in plan
-  reports/NN-<slug>.K.md    # attempt K, one per run; only an in-progress attempt is overwritten, by its final report
+  reports/NN-<slug>.K.md    # attempt K, one per run; only an in-progress attempt is overwritten, by its final report; a re-block appends to the latest blocked or partial attempt
   notes/<target>.<hex>.md   # commander notes from opsview; open until General resolves
 ```
 

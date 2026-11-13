@@ -2,7 +2,7 @@
 
 Path: `.saved/ops/<op>/notes/<target file name without .md>.<hex>.md`. `<hex>`: 4 lowercase hex chars. Examples: `plan.3fa9.md`, `03-api.3fa9.md`, `03-api.2.3fa9.md` (note on report attempt 2). Style: [style.md](style.md).
 
-A note is commander feedback on one block of a plan, order or report, written in opsview. It waits in `notes/` until the next General debrief.
+Commander feedback on one block of a plan, order or report, written in opsview. Waits in `notes/` for the next General debrief.
 
 Writers:
 - opsview: creates notes, edits NOTE, sets `status: resolved`, deletes notes.
@@ -30,10 +30,10 @@ created: YYYY-MM-DD HH:MM
 ```
 
 - `target`: path relative to the op dir.
-- `line`: 1-based line of the target file, frontmatter included, where the noted block started when the note was written.
+- `line`: 1-based line in target, frontmatter included, where the block started when written.
 - `status`: `open` until answered, then `resolved`.
 - `created`: when opsview wrote the note.
-- QUOTE fence: backticks, one more than the longest backtick run in the quote, at least 3. (Shown as `~~~` above only to nest inside this example.)
+- QUOTE fence: backticks, one more than the longest backtick run in the quote, at least 3. (`~~~` above only to nest inside this example.)
 - RESOLUTION: one bullet per change. Rejected note: `- no change: <why>`. Omitted while open.
 
 ## Rules
