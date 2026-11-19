@@ -25,7 +25,8 @@ var skipDirs = map[string]bool{".git": true, "node_modules": true, ".venv": true
 func Skipped(name string) bool { return skipDirs[name] }
 
 var (
-	planStatuses   = []string{"approved", "issued", "active", "closed"}
+	planStatuses   = []string{"design", "approved", "issued", "active", "closed"}
+	orderStages    = []string{"draft", "issued"}
 	reportStatuses = []string{"in-progress", "done", "partial", "blocked", "refused", "dropped"}
 	ranks          = []string{"soldier", "captain", "major"}
 	risks          = []string{"low", "medium", "high"}
@@ -77,11 +78,14 @@ type Order struct {
 	Risk    string `yaml:"risk" json:"risk"` // optional
 	Rev     int    `yaml:"rev" json:"rev"`
 	Depends []Num  `yaml:"depends" json:"depends"`
+	// Stage is the order's own frontmatter status: "draft" while the General
+	// refines it, "issued" once handed out. Empty means issued.
+	Stage string `yaml:"status" json:"stage"`
 
 	Path    string    `yaml:"-" json:"path"`
 	NN      string    `yaml:"-" json:"nn"`
 	Reports []*Report `yaml:"-" json:"reports"`
-	Status  string    `yaml:"-" json:"status"`  // latest report's, else "pending"
+	Status  string    `yaml:"-" json:"status"`  // "draft", else latest report's, else "pending"
 	Waiting []Num     `yaml:"-" json:"waiting"` // dependencies not done yet
 	Stale   bool      `yaml:"-" json:"stale"`   // revised since the latest report
 	Column  int       `yaml:"-" json:"column"`  // 1 + depth in the dependency graph
@@ -302,7 +306,7 @@ func (l *loader) place(o *Order) {
 		}
 		l.follow(dep)
 		o.Column = max(o.Column, dep.Column+1)
-		if dep.Status != "done" && o.Status != "dropped" {
+		if dep.Status != "done" && o.Status != "dropped" && o.Status != "draft" {
 			o.Waiting = append(o.Waiting, d)
 		}
 	}
@@ -359,6 +363,9 @@ func (o *Order) check(op string) (msgs []string) {
 	if o.Risk != "" && !slices.Contains(risks, o.Risk) {
 		msgs = append(msgs, fmt.Sprintf("unknown risk %q", o.Risk))
 	}
+	if o.Stage != "" && !slices.Contains(orderStages, o.Stage) {
+		msgs = append(msgs, fmt.Sprintf("unknown status %q", o.Stage))
+	}
 	return msgs
 }
 
@@ -374,20 +381,22 @@ func (r *Report) check() (msgs []string) {
 }
 
 // settle orders the reports by attempt and takes status and staleness from
-// the latest. It lists earlier attempts still marked in-progress: a claim
-// that was never finished.
+// the latest. A draft order is "draft" whatever its reports say. It lists
+// earlier attempts still marked in-progress: a claim that was never finished.
 func (o *Order) settle() (msgs []string) {
 	o.Status = "pending"
-	if len(o.Reports) == 0 {
-		return nil
-	}
-	slices.SortFunc(o.Reports, func(a, b *Report) int { return cmp.Compare(a.Attempt, b.Attempt) })
-	last := o.Reports[len(o.Reports)-1]
-	o.Status, o.Stale = last.Status, last.OrderRev < o.Rev
-	for _, r := range o.Reports[:len(o.Reports)-1] {
-		if r.Status == "in-progress" {
-			msgs = append(msgs, fmt.Sprintf("attempt %d in-progress, but attempt %d exists", r.Attempt, last.Attempt))
+	if len(o.Reports) > 0 {
+		slices.SortFunc(o.Reports, func(a, b *Report) int { return cmp.Compare(a.Attempt, b.Attempt) })
+		last := o.Reports[len(o.Reports)-1]
+		o.Status, o.Stale = last.Status, last.OrderRev < o.Rev
+		for _, r := range o.Reports[:len(o.Reports)-1] {
+			if r.Status == "in-progress" {
+				msgs = append(msgs, fmt.Sprintf("attempt %d in-progress, but attempt %d exists", r.Attempt, last.Attempt))
+			}
 		}
+	}
+	if o.Stage == "draft" {
+		o.Status, o.Stale = "draft", false
 	}
 	return msgs
 }

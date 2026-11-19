@@ -103,7 +103,7 @@ func TestProblems(t *testing.T) {
 	fsys[dir+"/reports/02-api.3.md"] = file("---\nop: vacuum-robot\norder: 02\nslug: api\nattempt: 2\nstatus: weird\n---\n")
 	fsys[dir+"/reports/07-ghost.1.md"] = file("---\nop: vacuum-robot\norder: 07\nslug: ghost\nattempt: 1\nstatus: done\n---\n")
 
-	fsys[dir+"/orders/09-risky.md"] = file("---\nop: vacuum-robot\norder: 09\nslug: risky\nrank: soldier\nrisk: extreme\nrev: 1\n---\n")
+	fsys[dir+"/orders/09-risky.md"] = file("---\nop: vacuum-robot\norder: 09\nslug: risky\nrank: soldier\nrisk: extreme\nrev: 1\nstatus: sketch\n---\n")
 	fsys[dir+"/reports/09-risky.1.md"] = file("---\nop: vacuum-robot\norder: 09\nslug: risky\nattempt: 1\nstatus: in-progress\n---\n")
 	fsys[dir+"/reports/09-risky.2.md"] = file("---\nop: vacuum-robot\norder: 09\nslug: risky\nattempt: 2\nstatus: refused\n---\n")
 
@@ -122,6 +122,7 @@ func TestProblems(t *testing.T) {
 		"03-loop.md: depends on missing order 10",
 		"dependency cycle: 03 -> 04 -> 03",
 		`09-risky.md: unknown risk "extreme"`,
+		`09-risky.md: unknown status "sketch"`,
 		"09-risky.md: attempt 1 in-progress, but attempt 2 exists",
 	} {
 		if !strings.Contains(all, want) {
@@ -164,6 +165,29 @@ func TestDropped(t *testing.T) {
 	}
 	if op.Dropped != 1 || op.Done != 1 || op.Total != 4 {
 		t.Errorf("dropped %d done %d total %d", op.Dropped, op.Done, op.Total)
+	}
+}
+
+// A draft order shows as "draft" and is never waiting itself; an order that
+// depends on it waits, since a draft is not done. "issued" and a missing
+// status behave alike.
+func TestDraft(t *testing.T) {
+	fsys := fixture()
+	fsys[dir+"/plan.md"] = file("---\nop: vacuum-robot\nstatus: design\ncreated: 2026-10-20\n---\n")
+	fsys[dir+"/orders/02-api.md"] = file("---\nop: vacuum-robot\norder: 02\nslug: api\nrank: major\nrev: 2\ndepends: [01]\nstatus: draft\n---\n")
+	fsys[dir+"/orders/09-tail.md"] = file("---\nop: vacuum-robot\norder: 09\nslug: tail\nrank: soldier\nrev: 1\nstatus: issued\n---\n")
+	op := Load(fsys, dir)
+	if len(op.Problems) != 0 {
+		t.Errorf("problems: %v", op.Problems)
+	}
+	if o := op.Orders[1]; o.Status != "draft" || o.Stale || len(o.Waiting) != 0 {
+		t.Errorf("order 02 = %+v", o)
+	}
+	if o := op.Orders[2]; o.Status != "pending" || !reflect.DeepEqual(o.Waiting, []Num{2}) {
+		t.Errorf("order 08 = %+v", o)
+	}
+	if o := op.Orders[3]; o.Status != "pending" || o.Stage != "issued" {
+		t.Errorf("order 09 = %+v", o)
 	}
 }
 

@@ -275,6 +275,7 @@
     <pre class="note-quote">{{quote}}</pre>
     <p class="note-text">{{text}}</p>
     <div class="note-foot">
+      {{#by}}<span class="note-by">{{by}}</span>{{/by}}
       <span class="note-date">{{created}}</span>
       <button type="button" class="btn-ghost" onclick="editNote(this)">edit</button>
       <button type="button" class="btn-ghost"
@@ -296,6 +297,7 @@
     <p class="note-text">{{text}}</p>
     <div class="note-resolution">{{#markdown}}{{{resolution}}}{{/markdown}}</div>
     <div class="note-foot">
+      {{#by}}<span class="note-by">{{by}}</span>{{/by}}
       <span class="note-date">{{created}}</span>
       <button type="button" class="btn-ghost danger"
               hx-delete="/api/notes" hx-vals='{"path": "{{path}}"}'

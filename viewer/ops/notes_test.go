@@ -2,6 +2,7 @@ package ops
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 	"testing/fstest"
 )
@@ -43,6 +44,26 @@ func TestFormatNoteRoundTrip(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, n) {
 		t.Errorf("round trip = %+v, want %+v\n%s", got, n, FormatNote(n))
+	}
+}
+
+// A critic note keeps its by field through parse and format; a commander
+// note has none and gets none.
+func TestNoteBy(t *testing.T) {
+	src := strings.Replace(noteSrc, "created: 2026-11-07 14:03\n", "created: 2026-11-07 14:03\nby: critic\n", 1)
+	n, err := ParseNote([]byte(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n.By != "critic" {
+		t.Errorf("by = %q, want critic", n.By)
+	}
+	if got, err := ParseNote(FormatNote(n)); err != nil || !reflect.DeepEqual(got, n) {
+		t.Errorf("round trip = %+v, %v, want %+v", got, err, n)
+	}
+	n.By = ""
+	if f := string(FormatNote(n)); strings.Contains(f, "by:") {
+		t.Errorf("commander note has a by field:\n%s", f)
 	}
 }
 

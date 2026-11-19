@@ -2,14 +2,14 @@
 
 Path: `.saved/ops/<op>/reports/NN-<slug>.K.md`. K = attempt, from 1. Create `reports/` if missing. Style: [style.md](style.md).
 
-Always write a report. Only exception: order `in-progress` in another session ([officer.md](officer.md) step 2). Never overwrite an earlier attempt. Exceptions: your own `in-progress` attempt, replaced by the final report, and a [re-block](#re-block), appended.
+Always write a report. Never overwrite an earlier attempt. Exceptions: your own `in-progress` attempt, replaced by the final report, and a [re-block](#re-block), appended.
 
 Status:
 - `in-progress`: greenlit, executing. Written at go, frontmatter only, claims the order. Never final.
 - `done`: every STEP executed, every DONE WHEN check passes.
 - `partial`: changes made, then stopped, or a DONE WHEN check fails.
 - `blocked`: stopped before changing anything.
-- `refused`: not taken: wrong rank, dependency not `done`, order unchanged, dropped without new rev, no greenlight.
+- `refused`: commander declined the greenlight. Never for bookkeeping: rank, dependencies, retries, drafts and claims are greenlight warnings ([officer.md](officer.md)).
 - `dropped`: commander retired the order, from any status but `done`. Only General writes it.
 
 ```markdown
@@ -34,6 +34,9 @@ date: YYYY-MM-DD
 
 # ASSUMPTIONS
 - <gray zone>: chose <X>. <why>.
+
+# OVERRIDES
+- <greenlight warning the commander's go overrode, verbatim>
 
 # BLOCKERS
 - <what stopped>. Q: <exact question for commander>

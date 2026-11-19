@@ -38,11 +38,11 @@ go vet ./... && go test ./...
 
 **ops** (`/ops.html`): one board per open operation. Orders sit in columns by dependency depth, joined by their dependency lines; hovering a card highlights its chain.
 
-- Card: number, slug, status, rank, rev, report count, risk level. `waiting` means a dependency isn't `done`; `revised` means the order changed since its latest report. `in-progress` pulses. A `dropped` order shows a struck-through slug and is never `waiting`; the `N dropped` chip next to `done/total` shows only when above 0.
+- Card: number, slug, status, rank, rev, report count, risk level. `waiting` means a dependency isn't `done`; `revised` means the order changed since its latest report. `in-progress` pulses. A `draft` order (frontmatter `status: draft`, still being refined by the General) has a dashed border and is never `waiting`, but its dependents wait on it. A `dropped` order shows a struck-through slug and is never `waiting`; the `N dropped` chip next to `done/total` shows only when above 0.
 - Filters: project chips, and "include closed".
 - Panel: click a card, or the plan, for its frontmatter, reports and rendered body. Report tabs switch to one attempt. Prev and next step through every plan, order and report on the board. Three widths (a bottom sheet on screens up to 1024px wide).
 - Problems found in the files (bad frontmatter, wrong file names, missing dependencies, cycles, an `in-progress` attempt that isn't the latest) are listed above the board.
-- Notes: the panel's "annotate" toggle (remembered per browser) turns a tap on any block of the plan, order or report (heading, paragraph, list item, table row, code block, quote) into a note form under it. A saved note shows as a card under its block, with edit, resolve, and delete behind a confirm dialog. A note whose quoted lines are gone from the file sits in a "Detached notes" tray at the top. A closed operation has no toggle, so it takes no new notes, but its open notes still show and keep their buttons. While a note form holds text, hot reload leaves the panel alone and catches up once the form closes. Resolved notes sit in a collapsed "Resolved" section at the bottom, each with its quote, the note, the General's resolution and a delete button.
+- Notes: the panel's "annotate" toggle (remembered per browser) turns a tap on any block of the plan, order or report (heading, paragraph, list item, table row, code block, quote) into a note form under it. A saved note shows as a card under its block, with edit, resolve, and delete behind a confirm dialog. A note the critic wrote (`by: critic` in its frontmatter) carries a `critic` label, open or resolved. A note whose quoted lines are gone from the file sits in a "Detached notes" tray at the top. A closed operation has no toggle, so it takes no new notes, but its open notes still show and keep their buttons. While a note form holds text, hot reload leaves the panel alone and catches up once the form closes. Resolved notes sit in a collapsed "Resolved" section at the bottom, each with its quote, the note, the General's resolution and a delete button.
 
 **docs** (`/`): tree of every matched markdown file, with frontmatter as a table and the body rendered.
 
@@ -66,7 +66,7 @@ JSON only, wrapped as `{"state": "success", "data": ...}` or `{"state": "failed"
 | `PUT /api/notes` | an open note at `path` with new `text`, or `status: "resolved"` |
 | `DELETE /api/notes?path=<note>` | the note file removed |
 
-Derived per order: `status` (latest attempt's, else `pending`), `waiting`, `stale`, `column`.
+Derived per order: `status` (`draft` when the order's frontmatter says `status: draft`, else latest attempt's, else `pending`), `waiting`, `stale`, `column`.
 
 Order and plan panels also carry `bodyLine` (the file line the body starts at), `annotatable` (the operation isn't closed) and `notes`: each open note on the file, with `line` moved to where its quote is now, or `detached` when the quote is gone. `resolved` lists the resolved notes on the file, oldest first.
 

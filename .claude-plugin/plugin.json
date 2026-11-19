@@ -1,6 +1,6 @@
 {
   "name": "ops",
-  "version": "0.3.0",
-  "description": "Chain of command for agent work: a General plans with the commander and issues orders; Major, Captain and Soldier execute them with rank-scaled tolerance for ambiguity and file reports.",
+  "version": "0.4.1",
+  "description": "Chain of command for agent work: a General designs with the commander, a Scout checks the design against the code, a Critic reviews it; orders are refined level by level and executed by Major, Captain and Soldier, rank being how much control the commander keeps.",
   "author": { "name": "cp", "email": "c.p@o-possum.com" }
 }

@@ -24,6 +24,7 @@ type Note struct {
 	Line    int    `yaml:"line" json:"line"`
 	Status  string `yaml:"status" json:"status"`
 	Created string `yaml:"created" json:"created"`
+	By      string `yaml:"by,omitempty" json:"by,omitempty"` // "critic"; empty for the commander's notes
 
 	Quote      string `yaml:"-" json:"quote"`
 	Text       string `yaml:"-" json:"text"`
